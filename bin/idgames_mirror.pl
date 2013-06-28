@@ -54,7 +54,7 @@
 # - Role::Dir::Attribs - local/archive directory attributes
 # - Role::FileDir::Attribs - local/archive file/directory attributes
 # - Role::LocalFileDir - methods and attributes for interacting with local
-# files; exists(), local_path()
+# files; exists, local_path
 # - Archive::File - a file in the archive
 # - Archive::Directory - a directory in the archive, can contain one or more
 # file and/or directory objects
@@ -398,38 +398,38 @@ sub BUILD {
     my $log = Log::Log4perl->get_logger();
     $log->debug(LOGNAME . q(: entering BUILD method));
     $log->logdie(qq('new' method missing 'opts_path' argument))
-        unless ( defined $self->opts_path() );
+        unless ( defined $self->opts_path );
     $log->logdie(qq('new' method missing 'archive_obj' argument))
-        unless ( defined $self->archive_obj() );
+        unless ( defined $self->archive_obj );
 
     # the archive file object
-    my $archive = $self->archive_obj();
+    my $archive = $self->archive_obj;
 
-    $self->name($archive->name() );
-    $self->parent($archive->parent() );
-    if ( length($self->parent()) > 0 ) {
-        $self->short_path($self->parent() . q(/) . $self->name());
+    $self->name($archive->name );
+    $self->parent($archive->parent);
+    if ( length($self->parent) > 0 ) {
+        $self->short_path($self->parent . q(/) . $self->name);
     } else {
-        $self->short_path(q(/) . $self->name());
+        $self->short_path(q(/) . $self->name);
     }
     $log->debug(qq(Creating stat object using local file/dir; ));
-    $log->debug(q(Local file/dir: ) . $self->absolute_path() );
-    my $stat = stat( $self->absolute_path() );
+    $log->debug(q(Local file/dir: ) . $self->absolute_path);
+    my $stat = stat( $self->absolute_path );
 
     unless ( defined $stat ) {
         # file doesn't exist
-        $log->debug($archive->name() . q( is not on the local system!));
+        $log->debug($archive->name . q( is not on the local system!));
         $self->short_type(IS_MISSING);
         $self->short_status(IS_MISSING);
         $self->long_status(q(Missing locally));
     } else {
         my $lsperms = File::Stat::Ls->new();
-        $self->perms($lsperms->format_mode($stat->mode()) );
-        $self->hardlinks($stat->nlink());
-        $self->owner($stat->uid());
-        $self->group($stat->gid());
-        $self->size($stat->size());
-        my $mtime = time2str(q(%b %e %Y), $stat->mtime());
+        $self->perms($lsperms->format_mode($stat->mode) );
+        $self->hardlinks($stat->nlink);
+        $self->owner( getpwuid($stat->uid) );
+        $self->group( getgrgid($stat->gid) );
+        $self->size($stat->size);
+        my $mtime = time2str(q(%b %e %Y), $stat->mtime);
         # get rid of extra spaces in the output of time2str
         $mtime =~ s/\s{2,}/ /;
         $self->mod_time($mtime);
@@ -438,25 +438,25 @@ sub BUILD {
         if ( -f $stat ) {
             $self->short_type(IS_FILE);
             $self->short_status(IS_FILE);
-            $log->debug($archive->name() . q( is a file!));
+            $log->debug($archive->name . q( is a file!));
             # check the size listed in the tarball versus the file size
-            if ( $stat->size() != $archive->size() ) {
+            if ( $stat->size != $archive->size ) {
                 $self->short_status(DIFF_SIZE);
                 $self->long_status(q(Size mismatch));
                 # for full dumps
                 $self->append_notes(qq(Size mismatch; )
-                    . q(archive size: ) . $archive->size() . q( )
-                    . q(local size: ) . $self->size() . qq(\n));
+                    . q(archive size: ) . $archive->size . q( )
+                    . q(local size: ) . $self->size . qq(\n));
             }
         } elsif ( -d $stat ) {
             $self->short_type(IS_DIR);
             $self->short_status(IS_DIR);
-            $log->debug($self->name() . q( is a directory!));
+            $log->debug($self->name . q( is a directory!));
             $self->long_status(q(Directory));
         } else {
             $self->short_type(IS_UNKNOWN);
             $self->short_status(IS_UNKNOWN);
-            $log->debug($self->name() . q( is an unknown file!));
+            $log->debug($self->name . q( is an unknown file!));
         }
     }
 } # sub BUILD
@@ -489,25 +489,25 @@ sub sync {
     my $lwp = $args{lwp};
     if ( $log->is_debug() ) {
         $log->debug(qq(Simulated download of a file;));
-        $log->debug(qq(Archive: ) . $lwp->get_base_url() . $self->short_path());
-        $log->debug(qq(Local:   ) . $self->absolute_path() );
+        $log->debug(qq(Archive: ) . $lwp->get_base_url() . $self->short_path);
+        $log->debug(qq(Local:   ) . $self->absolute_path );
         return 1;
     } else {
         if ( ref($self) eq q(Local::File) ) {
-            my $temp_file = $lwp->fetch( filename => $self->short_path() );
+            my $temp_file = $lwp->fetch( filename => $self->short_path );
             if ( defined $temp_file ) {
-                print qq( Writing file: ) . $self->absolute_path() . qq(\n);
-                move($temp_file, $self->absolute_path() );
+                print qq( Writing file: ) . $self->absolute_path . qq(\n);
+                move($temp_file, $self->absolute_path );
             }
             return 1;
         } elsif ( ref($self) eq q(Local::Directory) ) {
-            if ( -e $self->absolute_path() ) {
-                $log->debug(qq(Directory ) . $self->absolute_path()
+            if ( -e $self->absolute_path ) {
+                $log->debug(qq(Directory ) . $self->absolute_path
                     . qq( already exists));
             } else {
-                if ( ! mkdir($self->absolute_path(), q(0755)) ) {
+                if ( ! mkdir($self->absolute_path, q(0755)) ) {
                     $log->warn(q(Failed to create directory )
-                        . $self->absolute_path());
+                        . $self->absolute_path);
                     $log->logdie(q(Error message: ) . $!);
                 }
                 return 1;
@@ -533,16 +533,16 @@ sub needs_sync {
     my $log = Log::Log4perl->get_logger();
     $log->debug(LOGNAME . q(: entering needs_sync method));
 
-    if ( $self->short_status() eq IS_MISSING ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path());
+    if ( $self->short_status eq IS_MISSING ) {
+        $log->debug(q(needs_sync: ) . $self->absolute_path);
         $log->debug(q(needs_sync: File is missing from local system));
         return 1;
-    } elsif ( $self->short_status() eq DIFF_SIZE ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path());
+    } elsif ( $self->short_status eq DIFF_SIZE ) {
+        $log->debug(q(needs_sync: ) . $self->absolute_path);
         $log->debug(q(needs_sync: Local file different size than archive));
         return 1;
     } else {
-        $log->debug(q(needs_sync: ) . $self->absolute_path());
+        $log->debug(q(needs_sync: ) . $self->absolute_path);
         $log->debug(q(needs_sync: File/dir does not need to be sync'ed));
         return 0;
     }
@@ -584,7 +584,7 @@ object I<is> a dotfile.
 sub is_dotfile {
     my $self = shift;
 
-    my $checkname = $self->name();
+    my $checkname = $self->name;
     # return the number of matches, 0 or 1
     return scalar(grep(/$checkname/, @_dotfiles));
 } # sub is_dotfile
@@ -599,7 +599,7 @@ sub append_notes {
     my $self = shift;
     my $new_notes = shift;
 
-    my $notes = $self->notes();
+    my $notes = $self->notes;
     if ( defined $notes ) {
         $self->notes($notes . $new_notes);
     }
@@ -615,7 +615,7 @@ the C<short_path()> attribute.
 
 sub absolute_path {
     my $self = shift;
-    return $self->opts_path() . $self->short_path();
+    return $self->opts_path . $self->short_path;
 }
 
 =back
@@ -851,7 +851,7 @@ sub BUILD {
     my @valid_report_formats = qw(full more simple);
 
     # do some validation on the report type here
-    my $rf = $self->report_format();
+    my $rf = $self->report_format;
     if ( scalar(grep(/$rf/, @valid_report_formats)) == 0 ) {
         $log->logdie(qq(Can't create reports using the '$rf' format style));
     }
@@ -890,40 +890,40 @@ sub write_record {
     # - 'all' is set
     # headers:local:archive:size:same
     # missing files
-    my $checkname = $a->name();
+    my $checkname = $a->name;
     my $grepcheck = scalar(grep(/$checkname/, @_dotfiles));
-    if ( $l->short_status() eq IS_MISSING ) {
-        if ( $self->report_types() =~ /local/ ) { $write_flag = 1; }
+    if ( $l->short_status eq IS_MISSING ) {
+        if ( $self->report_types =~ /local/ ) { $write_flag = 1; }
     }
     # different size files
-    if ( $l->short_status() eq DIFF_SIZE ) {
-        if ( $self->report_types() =~ /size/ ) { $write_flag = 1; }
+    if ( $l->short_status eq DIFF_SIZE ) {
+        if ( $self->report_types =~ /size/ ) { $write_flag = 1; }
     }
     # is a file/directory on the local filesystem
-    if ( $l->short_status() eq IS_FILE || $l->short_status() eq IS_DIR ) {
-        if ( $self->report_types() =~ /same/ ) { $write_flag = 1; }
+    if ( $l->short_status eq IS_FILE || $l->short_status eq IS_DIR ) {
+        if ( $self->report_types =~ /same/ ) { $write_flag = 1; }
     }
     # is an unknown file on the local filesystem
-    if ( $l->short_status() eq IS_UNKNOWN ) {
+    if ( $l->short_status eq IS_UNKNOWN ) {
         $write_flag = 1;
     }
     # skip dotfiles?
-    if ( $l->is_dotfile() == 1 && ! $self->show_dotfiles() ) {
+    if ( $l->is_dotfile == 1 && ! $self->show_dotfiles ) {
         $write_flag = 0;
     }
     return undef unless ( $write_flag );
 
-    if ( $self->report_format() eq q(full) ) {
+    if ( $self->report_format eq q(full) ) {
         $self->format_full(
             archive_obj    => $a,
             local_obj      => $l,
         );
-    } elsif ( $self->report_format() eq q(more) ) {
+    } elsif ( $self->report_format eq q(more) ) {
         $self->format_more(
             archive_obj    => $a,
             local_obj      => $l,
         );
-    } elsif ( $self->report_format() eq q(simple) ) {
+    } elsif ( $self->report_format eq q(simple) ) {
         $self->format_simple(
             archive_obj    => $a,
             local_obj      => $l,
@@ -949,15 +949,15 @@ sub format_simple {
     my $l = $args{local_obj};
 
     my $filepath;
-    if ( $a->parent() !~ /\./ ) {
-        $filepath = $a->parent() . q(/) . $a->name();
+    if ( $a->parent !~ /\./ ) {
+        $filepath = $a->parent . q(/) . $a->name;
     } else {
-        $filepath = $a->name();
+        $filepath = $a->name;
     }
 
 format SIMPLE =
 @@ @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<< @#########
-$l->short_type(), $l->short_status(), $filepath, $a->mod_time(), $a->size()
+$l->short_type, $l->short_status, $filepath, $a->mod_time, $a->size
 .
     # set the current $FORMAT_NAME to the SIMPLE format
     $~ = q(SIMPLE);
@@ -987,17 +987,17 @@ sub format_more {
 ### BEGIN FORMAT
 
 my $notes = q();
-if ( length($l->long_status()) > 0 ) {
+if ( length($l->long_status) > 0 ) {
     $notes = q(Notes:);
 }
 
 format MORE =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$a->parent() . q(/) . $a->name()
+$a->parent . q(/) . $a->name
  archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<
-$a->perms(), $a->owner(), $a->group(), $a->mod_time(), $a->size(), $notes
+$a->perms, $a->owner, $a->group, $a->mod_time, $a->size, $notes
  local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<<<<<<<<
-$l->perms(), $l->owner(), $l->group(), $l->mod_time(), $l->size(), $l->long_status()
+$l->perms, $l->owner, $l->group, $l->mod_time, $l->size, $l->long_status
 .
 ### END FORMAT
     # set the current $FORMAT_NAME to the MORE format
@@ -1028,20 +1028,20 @@ sub format_full {
 
 format FULL =
 - @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$a->parent() . q(/) . $a->name()
+$a->parent . q(/) . $a->name
 Archive:                      Local:
 permissions: @>>>>>>>>>>>>    permissions: @>>>>>>>>>>>>
-$a->perms(), $l->perms()
+$a->perms, $l->perms
 owner:       @>>>>>>>>>>>>    owner:       @>>>>>>>>>>>>
-$a->owner(), $l->owner()
+$a->owner, $l->owner
 group:       @>>>>>>>>>>>>    group:       @>>>>>>>>>>>>
-$a->group(), $l->group()
+$a->group, $l->group
 mtime:       @<<<<<<<<<<<<    mtime:       @<<<<<<<<<<<<
-$a->mod_time(), $l->mod_time()
+$a->mod_time, $l->mod_time
 size:        @############    size:        @############
-$a->size(), $l->size()
+$a->size, $l->size
 Notes: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$l->notes()
+$l->notes
 .
 ### END FORMAT
 
@@ -1164,7 +1164,7 @@ sub BUILD {
     $log->debug(LOGNAME . q(: entering BUILD method));
 
     $self->user_agent(LWP::UserAgent->new());
-    my @exclude_mirrors = @{$self->exclude_urls()};
+    my @exclude_mirrors = @{$self->exclude_urls};
     if ( scalar(@exclude_mirrors) > 0 ) {
         # create a list of mirrors from the built in list minus the excluded
         # mirrors
@@ -1217,10 +1217,10 @@ sub get_base_url {
     my $log = Log::Log4perl->get_logger();
 
     my $base_url;
-    if ( ! defined $self->base_url() ) {
+    if ( ! defined $self->base_url ) {
         $base_url = $self->get_random_mirror();
     } else {
-        $base_url = $self->base_url();
+        $base_url = $self->base_url;
     }
 
     $log->debug(LOGNAME . qq(: get_base_url; returning: $base_url));
@@ -1278,7 +1278,7 @@ sub fetch {
     my $base_url = $args{base_url};
     # set a base URL if one was not set by the caller
     if ( ! defined $base_url ) {
-        $base_url = $self->get_base_url();
+        $base_url = $self->get_base_url;
     }
 
     # if the user didn't pass in a URL, pick one at random
@@ -1296,13 +1296,13 @@ sub fetch {
     );
 
     # add a temporary directory?
-    if ( defined $self->tempdir() ) {
-        $temp_args{DIR} = $self->tempdir();
+    if ( defined $self->tempdir ) {
+        $temp_args{DIR} = $self->tempdir;
     }
 
     # create a tempfile for the download
     my $fh = File::Temp->new( %temp_args );
-    $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename() );
+    $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename );
 
     # grab the file
     $log->debug(LOGNAME . qq(: Fetching file: )
@@ -1311,19 +1311,19 @@ sub fetch {
     my $ua = $self->user_agent();
     my $response = $ua->get(
         $base_url . $filename,
-        q(:content_file) => $fh->filename(),
+        q(:content_file) => $fh->filename,
     );
     if ( $response->is_error() ) {
         $log->warn(qq(Error downloading '$filename'; ));
         $log->warn(q(Response status: ) . $response->status_line() );
-        my $master_mirror = $self->master_mirror();
+        my $master_mirror = $self->master_mirror;
         if ( $response->code() == 404 && $base_url !~ /$master_mirror/ ) {
             $log->warn(qq(Retrying download of: $filename ));
-            $log->warn(qq(from ) . $self->master_mirror() );
+            $log->warn(qq(from ) . $self->master_mirror );
             # recursive call here, make another try with the master mirror
             return $self->fetch(
                 filename => $filename,
-                base_url => $self->master_mirror(),
+                base_url => $self->master_mirror,
             );
         } else {
             # we couldn't grab it from the master mirror either
@@ -1331,15 +1331,15 @@ sub fetch {
         }
     } elsif ( $response->is_redirect() ) {
         $log->warn(qq(Server returned 3XX redirect code;));
-        $log->warn(q(Response status: ) . $response->status_line() );
+        $log->warn(q(Response status: ) . $response->status_line );
         return undef;
     } else {
-        #my $content = $response->content();
+        #my $content = $response->content;
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
         print qq( Download successful; content length: $size\n);
-        return $fh->filename();
+        return $fh->filename;
     }
 } # sub fetch
 
@@ -1482,7 +1482,7 @@ sub write_stats {
     my @synced_files = @{$args{synced_files}};
     print qq(Calculating runtime statistics...\n);
     foreach my $synced ( @synced_files ) {
-        $total_synced_bytes += $synced->size();
+        $total_synced_bytes += $synced->size;
     }
     my $nf = Number::Format->new();
     print qq(- Total files listed in archive: ) . $args{total_archive_files}
@@ -1805,7 +1805,7 @@ errors were encountered.
     $log->debug(qq(Fetching 'ls-laR.gz' file listing));
     my $dl_file = $lwp->fetch(
         filename => q(ls-laR.gz),
-        base_url => $lwp->master_mirror(),
+        base_url => $lwp->master_mirror,
     );
     # returns undef if there was a problem fetching the file
     if ( ! defined $dl_file ) {
@@ -1901,7 +1901,7 @@ errors were encountered.
                         . $fields[DATE] . q( ) . $fields[YEAR_TIME],
                     name            => $name_field,
                 );
-                $total_archive_size += $archive_file->size();
+                $total_archive_size += $archive_file->size;
                 my $local_file = Local::File->new(
                     opts_path       => $opts{path},
                     archive_obj    => $archive_file,
