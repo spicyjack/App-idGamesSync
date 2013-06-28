@@ -426,8 +426,10 @@ sub BUILD {
         my $lsperms = File::Stat::Ls->new();
         $self->perms($lsperms->format_mode($stat->mode) );
         $self->hardlinks($stat->nlink);
-        $self->owner( getpwuid($stat->uid) );
-        $self->group( getgrgid($stat->gid) );
+        my $file_owner = getpwuid($stat->uid);
+        my $file_group = getgrgid($stat->gid);
+        $self->owner( $file_owner );
+        $self->group( $file_group );
         $self->size($stat->size);
         my $mtime = time2str(q(%b %e %Y), $stat->mtime);
         # get rid of extra spaces in the output of time2str
