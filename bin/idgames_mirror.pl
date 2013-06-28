@@ -1550,6 +1550,7 @@ creates a new copy of the mirror on the local host if a copy does not exist.
  -h|--help          Displays script options and usage
  -d|--debug         Sets logging level to DEBUG, tons of output
  -v|--verbose       Sets logging level to INFO, verbose output
+ -x|--examples      Show examples of script usage
 
  Script options:
  -n|--dry-run       Don't mirror content, explain script actions instead
@@ -1604,6 +1605,12 @@ creates a new copy of the mirror on the local host if a copy does not exist.
             ! = missing file
  The default output format is: _more_.
 
+=cut
+
+sub show_examples {
+
+print <<EXAMPLES;
+
  Usage Examples:
 
  # use a specific mirror, the 'more' output format
@@ -1630,6 +1637,10 @@ creates a new copy of the mirror on the local host if a copy does not exist.
     --exclude http://some-mirror-server.example.com \
     --size-local --format more --tempdir /path/to/temp/dir
 
+EXAMPLES
+
+} # sub examples
+
 =head1 DESCRIPTION
 
 Script normally exits with a 0 status code, or a non-zero status code if any
@@ -1647,6 +1658,7 @@ errors were encountered.
         q(help|h),
         q(debug|D|d),
         q(verbose|v),
+        q(examples|x),
         # script options
         q(dry-run|n), # don't mirror, just show steps that would be performed
         q(exclude|e=s@), # URLs to exclude when pulling from mirrors
@@ -1671,6 +1683,11 @@ errors were encountered.
 
     if ( defined $opts{help} ) {
         pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
+    }
+
+    if ( defined $opts{examples} ) {
+        show_examples();
+        exit 0;
     }
 
     # parent directory
