@@ -1,4 +1,6 @@
 *.swp
 .DS_Store
+# exuberant ctags
+tags
 demos/.*\.jpg$
 demos/.*\.png$
