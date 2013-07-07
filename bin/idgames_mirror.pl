@@ -1550,6 +1550,7 @@ creates a new copy of the mirror on the local host if a copy does not exist.
  -h|--help          Displays script options and usage
  -d|--debug         Sets logging level to DEBUG, tons of output
  -v|--verbose       Sets logging level to INFO, verbose output
+ -x|--examples      Show examples of script execution
 
  Script options:
  -n|--dry-run       Don't mirror content, explain script actions instead
@@ -1561,7 +1562,9 @@ creates a new copy of the mirror on the local host if a copy does not exist.
  -u|--url           Use a specific URL instead of a random mirror
 
  Logging options:
- --nocolor          Don't colorize log output (for redirecting output)
+ --colorize         Log colorization is disabled when script output is
+                    redirected to a pipe.  This option will always cause
+                    script output to be colorized.
 
  Misc. options:
  --show-mirrors     Show the current set of mirrors then exit
@@ -1569,6 +1572,8 @@ creates a new copy of the mirror on the local host if a copy does not exist.
  --headers          Show directory headers and blocks used in output
  --incoming         Show files located in the /incoming directory
  --tempdir          Temporary directory to use when downloading files
+ --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+ --use-local-ls-lar Always use the local copy of the 'ls-laR.gz' file
 
  By default, the script will query a random mirror for each file
  that needs to be downloaded unless the --url switch is used
