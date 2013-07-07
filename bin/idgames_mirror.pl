@@ -1,8 +1,12 @@
 #!/usr/bin/env perl
 
-# script actions:
-# - download the remote ls -laR file
-# - compare it with the files/directories in the local archive location
+# script to create/maintain a local mirror of the idGames Archive from one or
+# more idGames mirror servers
+
+# Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>
+
+# For support with this file, please file an issue on the GitHub issue
+# tracker: https://github.com/spicyjack/App-idGamesMirror/issues
 
 # TODO
 # - always pull the ls-laR.gz file from the primary mirror, unless a custom
@@ -70,11 +74,167 @@ idgames_mirror.pl - Create/update a mirror of the idgames repository.
 
 =head1 VERSION
 
-Version v0.0.2
+Version v0.0.3
 
 =cut
 
-use version; our $VERSION = qv('0.0.2');
+use version; our $VERSION = qv('0.0.3');
+
+=head1 SYNOPSIS
+
+Using a current C<ls-lR.gz> listing file downloaded from an C<idgames> mirror
+site, updates an existing copy of the C<idgames> mirror on the local host, or
+create a new copy of the mirror on the local host if a copy does not exist.
+
+=cut
+
+our @options = (
+    # help/verbosity options
+    q(help|h),
+    q(debug|D|d),
+    q(verbose|v),
+    # script options
+    q(dry-run|n), # don't mirror, just show steps that would be performed
+    q(exclude|e=s@), # URLs to exclude when pulling from mirrors
+    q(format|f=s), # reporting format
+    q(path|p=s), # output path
+    q(sync|s), # synchronize files from the mirror to the local filesystem
+    q(type|t=s@), # what type of information to report
+    q(url|u=s), # URL to use for mirroring
+    # logging options
+    q(color!),
+    q(loglevel|log|level|ll=s),
+    # misc options
+    q(show-mirrors), # show the mirrors array and exit
+    q(incoming), # show files in the /incoming directory
+    q(dotfiles), # don't show dotfiles in reports - .filename
+    q(headers), # show directory headers and blocks used
+    q(tempdir=s), # temporary directory to use for tempfiles
+    # combination options
+    q(size-local|local-size|sl), # show size mismatches, missing local files
+    q(size-same|ss), # show size mismatches and missing local files
+);
+
+=head1 OPTIONS
+
+ perl idgames_mirror.pl
+
+ Help/verbosity options:
+ -h|--help          Displays script options and usage
+ -d|--debug         Sets logging level to DEBUG, tons of output
+ -v|--verbose       Sets logging level to INFO, verbose output
+ -x|--examples      Show examples of script execution
+
+ Script options:
+ -n|--dry-run       Don't mirror content, explain script actions instead
+ -e|--exclude       Don't use these mirror URL(s) for syncing
+ -p|--path          Path to mirror the idgames archive to
+ -s|--sync          Synchronize files from mirror to local machine
+ -t|--type          Report type(s) to use for reporting (see below)
+ -f|--format        Output format, one of "full|more|simple"
+ -u|--url           Use a specific URL instead of a random mirror
+
+ Logging options:
+ --colorize         Log colorization is disabled when script output is
+                    redirected to a pipe.  This option will always cause
+                    script output to be colorized.
+
+ Misc. options:
+ --show-mirrors     Show the current set of mirrors then exit
+ --dotfiles         Show "hidden" files, Example: .message/.listing
+ --headers          Show directory headers and blocks used in output
+ --incoming         Show files located in the /incoming directory
+ --tempdir          Temporary directory to use when downloading files
+ --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+ --use-local-ls-lar Always use the local copy of the 'ls-laR.gz' file
+
+ By default, the script will query a random mirror for each file
+ that needs to be downloaded unless the --url switch is used
+ to specify a specific mirror.
+
+ Files located in the /incoming directory will be skipped by
+ default unless --incoming is used.  Most FTP sites won't
+ let you pull files from /incoming due to file/directory permissions
+ on the FTP server; it's basically useless to try to download
+ files from that directory, it will only generate errors.
+
+ Report Types (for use with the --type switch):
+ - headers - print directory headers and directory block sizes
+ - local - files in the archive that are missing on local disk
+ - archive - files on the local disk not listed in the archive
+ - size - size differences between the local file and archive file
+ - same - same size file exists on disk and in the archive
+ - all - print all of the above information
+ The default report type is: _all of the above_.
+
+ Combined report types:
+ --size-local   (size + local) Show file size mismatches, and files
+                missing on local system
+ --size-same    (size + same) Show all files, both valid files and size
+                mismatched files
+
+ Output formats (for use with the --format switch):
+ - full     One line per file/directory attribute
+ - more     Shows filename, date/time, size on one line,
+            file attributes on the next line
+ - simple   One file per line, with status flags in the left hand side.
+            Status flags: F = file, D = directory, S = size mismatch,
+            ! = missing file
+ The default output format is: _more_.
+
+ Usage Examples:
+
+ # use a specific mirror, the 'more' output format
+ idgames_mirror.pl --url http://example.com --format more \
+    --path /path/to/your/idgames/dir
+
+ # specific mirror, 'simple' output format, show missing local files
+ # and files that are different sizes between local and the mirror
+ idgames_mirror.pl --path /path/to/your/idgames/dir \
+    --url http://example.com --format simple --type size --type local
+
+ # same as above, with shortcut options
+ idgames_mirror.pl --path /path/to/your/idgames/dir \
+    --url http://example.com --format simple --size-local
+
+ # use random mirrors, exclude a specific mirror
+ idgames_mirror.pl --path /path/to/your/idgames/dir \
+    --exclude http://some-mirror-server.example.com \
+    --size-local --format more
+
+ # use random mirrors, exclude a specific mirror,
+ # specify temporary directory
+ idgames_mirror.pl --path /path/to/your/idgames/dir \
+    --exclude http://some-mirror-server.example.com \
+    --size-local --format more --tempdir /path/to/temp/dir
+
+=head1 DESCRIPTION
+
+Script normally exits with a 0 status code, or a non-zero status code if any
+errors were encountered.
+
+=head1 OBJECTS
+
+=head2 idGames::Mirror::Config
+
+Handle/manage script options using L<Getopt::Long>.
+
+=cut
+
+package idGames::Mirror::Config;
+
+    # force writes in output to STDOUT
+    $| = 1;
+    my %opts;
+    my $p = Getopt::Long::Parser->new();
+    $p->getoptions(
+        \%opts,
+    );
+
+    if ( defined $opts{help} ) {
+        pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
+    }
+
 
 =head1 OBJECTS
 
@@ -1536,148 +1696,6 @@ use constant {
 my $report_types = q(headers:local:archive:size:same);
 my $report_format = q(more);
 
-=head1 SYNOPSIS
-
-Using a current C<ls-lR.gz> listing file downloaded from an C<idgames> mirror
-site, updates an existing copy of the C<idgames> mirror on the local host, or
-creates a new copy of the mirror on the local host if a copy does not exist.
-
-=head1 OPTIONS
-
- perl idgames_mirror.pl
-
- Help/verbosity options:
- -h|--help          Displays script options and usage
- -d|--debug         Sets logging level to DEBUG, tons of output
- -v|--verbose       Sets logging level to INFO, verbose output
- -x|--examples      Show examples of script execution
-
- Script options:
- -n|--dry-run       Don't mirror content, explain script actions instead
- -e|--exclude       Don't use these mirror URL(s) for syncing
- -p|--path          Path to mirror the idgames archive to
- -s|--sync          Synchronize files from mirror to local machine
- -t|--type          Report type(s) to use for reporting (see below)
- -f|--format        Output format, one of "full|more|simple"
- -u|--url           Use a specific URL instead of a random mirror
-
- Logging options:
- --colorize         Log colorization is disabled when script output is
-                    redirected to a pipe.  This option will always cause
-                    script output to be colorized.
-
- Misc. options:
- --show-mirrors     Show the current set of mirrors then exit
- --dotfiles         Show "hidden" files, Example: .message/.listing
- --headers          Show directory headers and blocks used in output
- --incoming         Show files located in the /incoming directory
- --tempdir          Temporary directory to use when downloading files
- --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
- --use-local-ls-lar Always use the local copy of the 'ls-laR.gz' file
-
- By default, the script will query a random mirror for each file
- that needs to be downloaded unless the --url switch is used
- to specify a specific mirror.
-
- Files located in the /incoming directory will be skipped by
- default unless --incoming is used.  Most FTP sites won't
- let you pull files from /incoming due to file/directory permissions
- on the FTP server; it's basically useless to try to download
- files from that directory, it will only generate errors.
-
- Report Types (for use with the --type switch):
- - headers - print directory headers and directory block sizes
- - local - files in the archive that are missing on local disk
- - archive - files on the local disk not listed in the archive
- - size - size differences between the local file and archive file
- - same - same size file exists on disk and in the archive
- - all - print all of the above information
- The default report type is: _all of the above_.
-
- Combined report types:
- --size-local   (size + local) Show file size mismatches, and files
-                missing on local system
- --size-same    (size + same) Show all files, both valid files and size
-                mismatched files
-
- Output formats (for use with the --format switch):
- - full     One line per file/directory attribute
- - more     Shows filename, date/time, size on one line,
-            file attributes on the next line
- - simple   One file per line, with status flags in the left hand side.
-            Status flags: F = file, D = directory, S = size mismatch,
-            ! = missing file
- The default output format is: _more_.
-
- Usage Examples:
-
- # use a specific mirror, the 'more' output format
- idgames_mirror.pl --url http://example.com --format more \
-    --path /path/to/your/idgames/dir
-
- # specific mirror, 'simple' output format, show missing local files
- # and files that are different sizes between local and the mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --type size --type local
-
- # same as above, with shortcut options
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --size-local
-
- # use random mirrors, exclude a specific mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
-    --size-local --format more
-
- # use random mirrors, exclude a specific mirror,
- # specify temporary directory
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
-    --size-local --format more --tempdir /path/to/temp/dir
-
-=head1 DESCRIPTION
-
-Script normally exits with a 0 status code, or a non-zero status code if any
-errors were encountered.
-
-=cut
-
-    # force writes in output to STDOUT
-    $| = 1;
-    my %opts;
-    my $p = Getopt::Long::Parser->new();
-    $p->getoptions(
-        \%opts,
-        # help/verbosity options
-        q(help|h),
-        q(debug|D|d),
-        q(verbose|v),
-        # script options
-        q(dry-run|n), # don't mirror, just show steps that would be performed
-        q(exclude|e=s@), # URLs to exclude when pulling from mirrors
-        q(format|f=s), # reporting format
-        q(path|p=s), # output path
-        q(sync|s), # synchronize files from the mirror to the local filesystem
-        q(type|t=s@), # what type of information to report
-        q(url|u=s), # URL to use for mirroring
-        # logging options
-        q(color!),
-        q(loglevel|log|level|ll=s),
-        # misc options
-        q(show-mirrors), # show the mirrors array and exit
-        q(incoming), # show files in the /incoming directory
-        q(dotfiles), # don't show dotfiles in reports - .filename
-        q(headers), # show directory headers and blocks used
-        q(tempdir=s), # temporary directory to use for tempfiles
-        # combination options
-        q(size-local|local-size|sl), # show size mismatches, missing local files
-        q(size-same|ss), # show size mismatches and missing local files
-    );
-
-    if ( defined $opts{help} ) {
-        pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
-    }
-
     # parent directory
     my $parent = q();
     # flag set whenever we're parsing files in/beneath the /incoming directory
@@ -2007,13 +2025,12 @@ errors were encountered.
 
 =head1 AUTHOR
 
-Brian Manning, C<< <brian at portaboom dot com> >>
+Brian Manning, C<< <brian at xaoc dot org> >>
 
 =head1 BUGS
 
 Please report any bugs or feature requests to
-C<mayhem-launcher@googlegroups.com>, or through the web interface at
-L<http://code.google.com/p/mayhem-launcher/issues/list>.  I will be notified,
+L<https://github.com/spicyjack/App-idGamesMirror/issues>.  I will be notified,
 and then you'll automatically be notified of progress on your bug as I make
 changes.
 
@@ -2027,13 +2044,13 @@ You can also look for information at:
 
 =over 4
 
-=item * Mayhem Launcher project page
+=item * App::idGamesMirror GitHub project page
 
-L<http://code.google.com/p/mayhem-launcher>
+L<https://github.com/spicyjack/App-idGamesMirror>
 
-=item * Mayhem Launcher Google Groups page
+=item * App::idGamesMirror GitHub issues page
 
-L<http://groups.google.com/group/mayhem-launcher>
+L<https://github.com/spicyjack/App-idGamesMirror/issues>
 
 =back
 
@@ -2045,7 +2062,7 @@ source code for the rest of us to make merry mayhem with.
 
 =head1 COPYRIGHT & LICENSE
 
-Copyright (c) 2011 Brian Manning, all rights reserved.
+Copyright (c) 2011, 2013 Brian Manning, all rights reserved.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
