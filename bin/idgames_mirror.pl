@@ -60,6 +60,7 @@ our @options = (
     q(debug|D|d),
     q(verbose|v),
     q(examples|x),
+    q(morehelp|m),
     # script options
     q(dry-run|n), # don't mirror, just show steps that would be performed
     q(exclude|e=s@), # URLs to exclude when pulling from mirrors
@@ -93,14 +94,15 @@ our @options = (
  -d|--debug         Sets logging level to DEBUG, tons of output
  -v|--verbose       Sets logging level to INFO, verbose output
  -x|--examples      Show examples of script execution
+ -m|--morehelp      Show extended help info (format/type specifiers)
 
  Script options:
  -n|--dry-run       Don't mirror content, explain script actions instead
  -e|--exclude       Don't use these mirror URL(s) for syncing
  -p|--path          Path to mirror the idgames archive to
  -s|--sync          Synchronize files from mirror to local machine
- -t|--type          Report type(s) to use for reporting (see below)
- -f|--format        Output format, one of "full|more|simple"
+ -t|--type          Report type(s) to use for reporting (see --morehelp)
+ -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
 
  Logging options:
@@ -116,66 +118,6 @@ our @options = (
  --tempdir          Temporary directory to use when downloading files
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
  --use-local-ls-lar Always use the local copy of the 'ls-laR.gz' file
-
- By default, the script will query a random mirror for each file
- that needs to be downloaded unless the --url switch is used
- to specify a specific mirror.
-
- Files located in the /incoming directory will be skipped by
- default unless --incoming is used.  Most FTP sites won't
- let you pull files from /incoming due to file/directory permissions
- on the FTP server; it's basically useless to try to download
- files from that directory, it will only generate errors.
-
- Report Types (for use with the --type switch):
- - headers - print directory headers and directory block sizes
- - local - files in the archive that are missing on local disk
- - archive - files on the local disk not listed in the archive
- - size - size differences between the local file and archive file
- - same - same size file exists on disk and in the archive
- - all - print all of the above information
- The default report type is: _all of the above_.
-
- Combined report types:
- --size-local   (size + local) Show file size mismatches, and files
-                missing on local system
- --size-same    (size + same) Show all files, both valid files and size
-                mismatched files
-
- Output formats (for use with the --format switch):
- - full     One line per file/directory attribute
- - more     Shows filename, date/time, size on one line,
-            file attributes on the next line
- - simple   One file per line, with status flags in the left hand side.
-            Status flags: F = file, D = directory, S = size mismatch,
-            ! = missing file
- The default output format is: _more_.
-
- Usage Examples:
-
- # use a specific mirror, the 'more' output format
- idgames_mirror.pl --url http://example.com --format more \
-    --path /path/to/your/idgames/dir
-
- # specific mirror, 'simple' output format, show missing local files
- # and files that are different sizes between local and the mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --type size --type local
-
- # same as above, with shortcut options
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --size-local
-
- # use random mirrors, exclude a specific mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
-    --size-local --format more
-
- # use random mirrors, exclude a specific mirror,
- # specify temporary directory
- idgames_mirror.pl --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
-    --size-local --format more --tempdir /path/to/temp/dir
 
 =head1 DESCRIPTION
 
@@ -230,6 +172,12 @@ sub new {
         exit 0;
     }
 
+    # dump and bail if we get called with --morehelp
+    if ( $self->get(q(morehelp)) ) {
+        $self->show_morehelp();
+        exit 0;
+    }
+
     # return this object to the caller
     return $self;
 }
@@ -273,6 +221,57 @@ print <<EXAMPLES;
 EXAMPLES
 
 } # sub examples
+
+=item show_morehelp
+
+Show more help information on how to use the script and how the script
+functions.
+
+=cut
+
+sub show_morehelp {
+
+print <<MOREHELP;
+
+ By default, the script will query a random mirror for each file that needs to
+ be downloaded unless the --url switch is used to specify a specific mirror.
+
+ Files located in the /incoming directory will not be mirrored by default
+ unless --incoming is used.  Most FTP sites won't let you download/retrieve
+ files from /incoming due to file/directory permissions on the FTP server;
+ it's basically useless to try to download files from that directory, it will
+ only generate errors.
+
+ Report Types (for use with the --type switch):
+ - headers - print directory headers and directory block sizes
+ - local - files in the archive that are missing on local disk
+ - archive - files on the local disk not listed in the archive
+ - size - size differences between the local file and archive file
+ - same - same size file exists on disk and in the archive
+ - all - print all of the above information
+ The default report type is: _all of the above_.
+
+ Combined report types:
+ --size-local   (size + local) Show file size mismatches, and files missing on
+                local system
+ --size-same    (size + same) Show all files, both valid files and size
+                mismatched files
+
+ Output formats (for use with the --format switch):
+ - full     One line per file/directory attribute
+ - more     Shows filename, date/time, size on one line, file attributes on
+            the next line
+ - simple   One file per line, with status flags in the left hand side.
+            Status flags:
+            - F = This object is a file
+            - D = This object is a directory
+            - S = file size mismatch
+            - ! = missing file on local system
+
+ The default output format is "more".
+
+MOREHELP
+}
 
 =item get($key)
 
@@ -1864,11 +1863,10 @@ errors were encountered.
     }
 
     # the rest of the log4perl setup
-    $log4perl_conf .= q(
-        log4perl.appender.Screen.stderr = 1
-        log4perl.appender.Screen.layout = PatternLayout
-        log4perl.appender.Screen.layout.ConversionPattern = [%6r] %p %m%n
-    );
+    $log4perl_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
+        . qq(log4perl.appender.Screen.layout = PatternLayout\n)
+        . q(log4perl.appender.Screen.layout.ConversionPattern )
+        . qq|= [%6r] %p{1} %L (%M{1}) %m%n\n|;
 
     Log::Log4perl->init(\$log4perl_conf);
     my $log = Log::Log4perl->get_logger();
@@ -1888,14 +1886,14 @@ errors were encountered.
             # variables used below
             $cfg->set(q(tempdir)) = $ENV{TEMP};
             $log->debug(__FILE__ . q(: setting tempdir to )
-                . $cfg->get(q(tempdir)) );
+                . $cfg->get(q(tempdir)));
         } elsif ( defined $ENV{TMP} ) {
-            $cfg->set(q(tempdir)) = $ENV{TMP};
+            $cfg->set(q(tempdir), $ENV{TMP});
         } elsif ( defined $ENV{TMPDIR} ) {
-            $cfg->set(q(tempdir)) = $ENV{TMPDIR};
+            $cfg->set(q(tempdir), $ENV{TMPDIR})
         } else {
             # FIXME this only works on UNIX-y platforms
-            $cfg->set(q(tempdir)) = q(/tmp);
+            $cfg->set(q(tempdir), q(/tmp));
         }
     }
     my $lwp = LWP::Wrapper->new(
@@ -1947,7 +1945,7 @@ errors were encountered.
     }
 
     if ( ! $cfg->defined(q(dotfiles)) ) {
-        $cfg->get(q(dotfiles)) = 0;
+        $cfg->set(q(dotfiles), 0);
     }
 
     my $stats = Runtime::Stats->new( report_format => $report_format );
@@ -1976,7 +1974,9 @@ errors were encountered.
     } else {
         my $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
         $log->debug(qq(Set lslar_file to $lslar_file));
-        if ( $cfg->defined(q(sync)) ) {
+        if ( ( $cfg->defined(q(sync)) || $cfg->defined(q(update-ls-lar)) )
+            && ! $cfg->defined(q(use-local-ls-lar))
+            ) {
             my $in_fh = IO::File->new(qq(< $lslar_file));
             my $file_digest;
             # create the digest object outside of any nested blocks
@@ -2004,18 +2004,17 @@ errors were encountered.
             # on disk by comparing MD5 checksums for the buffer and file
             if ( $file_digest ne $content_digest ) {
                 #my $out_fh = IO::File->new(qq(> $lslar_file));
+                print qq(ls-laR.gz Checksum mismatch!\n);
                 print qq(- Local copy: $file_digest\n);
                 print qq(- Archive copy: $content_digest\n);
                 print qq(- Replacing file: $lslar_file\n);
                 print qq(- With file: $dl_file\n);
-                print qq(- Checksum mismatch, writing new ls-laR.gz file\n);
-                # FIXME add a check for $cfg->get(q(sync)) here prior to making
-                # the call to move()
                 move($dl_file, $lslar_file);
             } else {
-                print qq( $lslar_file matches mirror copy\n);
+                print qq(- $lslar_file matches mirror copy\n);
             }
         }
+        # FIXME set $lslar_file to the local copy if use-local-ls-lar is set
         my $gunzip = IO::Uncompress::Gunzip->new($lslar_file, Append => 1);
         $log->logdie(q(Could not create IO::Uncompress::Gunzip object; ) .
             $GunzipError) unless (defined $gunzip);
@@ -2025,6 +2024,10 @@ errors were encountered.
             $uncompressed_bytes = $gunzip->read($buffer);
         }
         $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
+        if ( $cfg->defined(q(update-ls-lar)) ) {
+            print qq(- ls-laR.gz downloaded, exiting program\n);
+            exit 0;
+        }
         my $counter = 0;
         my $current_dir;
         foreach my $line ( split(/\n/, $buffer) ) {
