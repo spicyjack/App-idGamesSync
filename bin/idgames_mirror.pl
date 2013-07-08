@@ -200,6 +200,10 @@ Configure/manage script options using L<Getopt::Long>.
 
 package idGames::Mirror::Config;
 
+use strict;
+use warnings;
+use Pod::Usage; # prints POD docs when --help is called
+
 sub new {
     my $class = shift;
 
@@ -1790,7 +1794,7 @@ use IO::Uncompress::Gunzip qw($GunzipError);
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use LWP::UserAgent;
 use Mouse; # sets strict and warnings
-use Pod::Usage; # prints POD docs when --help is called
+
 
 use constant {
     DEBUG_LOOPS => 20000,
@@ -1882,16 +1886,16 @@ errors were encountered.
         if ( defined $ENV{TEMP} ) {
             # FIXME need to set taint mode, and untaint the environment
             # variables used below
-            $cfg->get(tempdir} = $ENV{TEMP};
+            $cfg->set(q(tempdir)) = $ENV{TEMP};
             $log->debug(__FILE__ . q(: setting tempdir to )
                 . $cfg->get(q(tempdir)) );
         } elsif ( defined $ENV{TMP} ) {
-            $cfg->get(tempdir} = $ENV{TMP};
+            $cfg->set(q(tempdir)) = $ENV{TMP};
         } elsif ( defined $ENV{TMPDIR} ) {
-            $cfg->get(tempdir} = $ENV{TMPDIR};
+            $cfg->set(q(tempdir)) = $ENV{TMPDIR};
         } else {
             # FIXME this only works on UNIX-y platforms
-            $cfg->get(tempdir} = q(/tmp);
+            $cfg->set(q(tempdir)) = q(/tmp);
         }
     }
     my $lwp = LWP::Wrapper->new(
@@ -1913,7 +1917,7 @@ errors were encountered.
 
     ### REPORT TYPES
     if ( $cfg->defined(q(type)) ) {
-        my @reports = @{$cfg->get(q(type));
+        my @reports = @{$cfg->get(q(type))};
         my @requested_types;
         foreach my $type ( @reports ) {
             if ( $report_types =~ /$type/ ) {
@@ -1939,11 +1943,11 @@ errors were encountered.
 
     ### REPORT FORMATS
     if ( $cfg->defined(q(format)) ) {
-        $report_format = $cfg->get(format};
+        $report_format = $cfg->get(q(format));
     }
 
     if ( ! $cfg->defined(q(dotfiles)) ) {
-        $cfg->get(dotfiles} = 0;
+        $cfg->get(q(dotfiles)) = 0;
     }
 
     my $stats = Runtime::Stats->new( report_format => $report_format );
@@ -1952,7 +1956,7 @@ errors were encountered.
     my $report = Reporter->new(
         report_format   => $report_format,
         report_types    => $report_types,
-        show_dotfiles   => $cfg->get(dotfiles},
+        show_dotfiles   => $cfg->get(q(dotfiles)),
     );
 
     # a list of files/directories were sync'ed with a mirror, either because
@@ -2061,7 +2065,7 @@ errors were encountered.
                 );
                 $total_archive_size += $archive_file->size;
                 my $local_file = Local::File->new(
-                    opts_path       => $cfg->get(path},
+                    opts_path       => $cfg->get(q(path)),
                     archive_obj    => $archive_file,
                 );
                 $report->write_record(
@@ -2072,7 +2076,7 @@ errors were encountered.
                     if ( $local_file->needs_sync() ) {
                         if ( $local_file->sync(
                                 lwp             => $lwp,
-                                sync_dotfiles   => $cfg->get(dotfiles} )
+                                sync_dotfiles   => $cfg->get(q(dotfiles)) )
                         ) {
                             # add the file to the list of synced files
                             # used later on in reporting
@@ -2097,7 +2101,7 @@ errors were encountered.
                     total_blocks    => 0,
                 );
                 my $local_dir = Local::Directory->new(
-                    opts_path       => $cfg->get(path},
+                    opts_path       => $cfg->get(q(path)),
                     archive_obj    => $archive_dir,
                 );
                 $report->write_record(
@@ -2108,7 +2112,7 @@ errors were encountered.
                     if ( $local_dir->needs_sync() ) {
                         $local_dir->sync(
                             lwp             => $lwp,
-                            sync_dotfiles   => $cfg->get(dotfiles},
+                            sync_dotfiles   => $cfg->get(q(dotfiles)),
                         );
                     }
                 }
