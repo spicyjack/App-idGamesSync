@@ -2013,8 +2013,12 @@ errors were encountered.
             } else {
                 print qq(- $lslar_file matches mirror copy\n);
             }
+        } elsif ( $cfg->defined(q(use-local-ls-lar)) ) {
+            $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
+            if ( ! -r $lslar_file ) {
+                $log->logdie(qq(Can't read file $lslar_file));
+            }
         }
-        # FIXME set $lslar_file to the local copy if use-local-ls-lar is set
         my $gunzip = IO::Uncompress::Gunzip->new($lslar_file, Append => 1);
         $log->logdie(q(Could not create IO::Uncompress::Gunzip object; ) .
             $GunzipError) unless (defined $gunzip);
