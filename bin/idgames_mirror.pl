@@ -2020,6 +2020,8 @@ errors were encountered.
                 move($dl_file, $lslar_file);
             } else {
                 print qq(- $lslar_file matches mirror copy\n);
+                $log->debug(qq(Unlinking $dl_file));
+                unlink $dl_file;
             }
         } elsif ( $cfg->defined(q(use-local-ls-lar)) ) {
             $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
