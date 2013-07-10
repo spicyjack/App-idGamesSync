@@ -2152,12 +2152,12 @@ errors were encountered.
                 $log->warn(qq(Unknown line found in input data; >$line<));
             }
             $counter++;
-            if ( $log->is_debug() ) {
-                if ( $counter == DEBUG_LOOPS ) {
-                    $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
-                    exit 0;
-                }
-            }
+            #if ( $log->is_debug() ) {
+            #    if ( $counter == DEBUG_LOOPS ) {
+            #        $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
+            #        exit 0;
+            #    }
+            #}
         } # foreach my $line ( split(/\n/, $buffer) )
     } # if ( ! defined $dl_file )
     $stats->stop_timer();
