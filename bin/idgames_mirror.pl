@@ -106,9 +106,7 @@ our @options = (
  -u|--url           Use a specific URL instead of a random mirror
 
  Logging options:
- --colorize         Log colorization is disabled when script output is
-                    redirected to a pipe.  This option will always cause
-                    script output to be colorized.
+ --colorize         Always colorize log output (for piping log output)
 
  Misc. options:
  --show-mirrors     Show the current set of mirrors then exit
