@@ -1584,7 +1584,7 @@ sub fetch {
     # grab the file
     $log->debug(LOGNAME . qq(: Fetching file: )
         . $base_url . $filename . qq(\n));
-    print qq( Fetching file: ) . $base_url . $filename . qq(\n);
+    print qq(- Fetching file: ) . $base_url . $filename . qq(\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
         $base_url . $filename,
@@ -1615,7 +1615,7 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print qq( Download successful; content length: $size\n);
+        print qq(- Download successful; content length: $size\n);
         return $fh->filename;
     }
 } # sub fetch
@@ -1912,6 +1912,11 @@ errors were encountered.
 
     $log->logdie(q(Must specify path directory with --path))
         unless ( $cfg->defined(q(path)) );
+    # append a forward slash on to the URL so other paths don't need the
+    # forward slash later on
+    if ( $cfg->get(q(path)) !~ /\/$/ ) {
+        $cfg->set(q(path), $cfg->get(q(path)) . q(/));
+    }
 
     ### REPORT TYPES
     if ( $cfg->defined(q(type)) ) {
@@ -1964,15 +1969,20 @@ errors were encountered.
     my $total_archive_files = 0;
     my $total_archive_size = 0;
     $log->debug(qq(Fetching 'ls-laR.gz' file listing));
+    # if a custom URL was specified, use that here instead
+    my $lslar_url = $lwp->master_mirror;
+    if ( $cfg->defined(q(url)) ) {
+        $lslar_url = $cfg->get(q(url));
+    }
     my $dl_file = $lwp->fetch(
         filename => q(ls-laR.gz),
-        base_url => $lwp->master_mirror,
+        base_url => $lslar_url,
     );
     # returns undef if there was a problem fetching the file
     if ( ! defined $dl_file ) {
         $log->logdie(qq(Could not download ls-laR.gz file));
     } else {
-        my $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
+        my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
         $log->debug(qq(Set lslar_file to $lslar_file));
         if ( ( $cfg->defined(q(sync)) || $cfg->defined(q(update-ls-lar)) )
             && ! $cfg->defined(q(use-local-ls-lar))
