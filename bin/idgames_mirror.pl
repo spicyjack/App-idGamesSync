@@ -669,7 +669,6 @@ sub BUILD {
     my $self = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering BUILD method));
     $log->logdie(qq('new' method missing 'opts_path' argument))
         unless ( defined $self->opts_path );
     $log->logdie(qq('new' method missing 'archive_obj' argument))
@@ -734,7 +733,7 @@ sub BUILD {
             $log->debug($self->name . q( is an unknown file!));
         }
     }
-} # sub BUILD
+}
 
 =item sync
 
@@ -748,7 +747,6 @@ sub sync {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering sync method));
     $log->logdie(qq('sync' method missing 'lwp' argument))
         unless ( defined $args{lwp} );
     $log->logdie(qq('sync' method missing 'sync_dotfiles' argument))
@@ -806,7 +804,6 @@ sub needs_sync {
     my $self = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering needs_sync method));
 
     if ( $self->short_status eq IS_MISSING ) {
         $log->debug(q(needs_sync: ) . $self->absolute_path);
@@ -835,7 +832,6 @@ sub exists {
     my $check_path = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering exists method));
 
     $log->debug(qq(Checking for local file $check_path));
     my $stat = stat($check_path);
@@ -1121,7 +1117,6 @@ sub BUILD {
     my $self = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering BUILD method));
 
     my @valid_report_formats = qw(full more simple);
 
@@ -1146,7 +1141,6 @@ sub write_record {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering write_record method));
 
     $log->logdie(qq('write_record' method missing 'archive_obj' object))
         unless ( exists $args{archive_obj} );
@@ -1218,7 +1212,6 @@ sub format_simple {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering format_simple method));
 
     my $a = $args{archive_obj};
     my $l = $args{local_obj};
@@ -1254,7 +1247,6 @@ sub format_more {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering format_more method));
 
     my $l = $args{local_obj};
     my $a = $args{archive_obj};
@@ -1296,7 +1288,6 @@ sub format_full {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering format_full method));
 
     my $l = $args{local_obj};
     my $a = $args{archive_obj};
@@ -1436,7 +1427,6 @@ sub BUILD {
     my $self = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering BUILD method));
 
     $self->user_agent(LWP::UserAgent->new());
     my @exclude_mirrors = @{$self->exclude_urls};
@@ -1464,7 +1454,7 @@ sub BUILD {
             $log->debug(LOGNAME . qq(: Usable mirror: $um));
         }
     }
-} # sub BUILD
+}
 
 =item get_random_mirror
 
@@ -1544,7 +1534,6 @@ sub fetch {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->debug(LOGNAME . q(: entering fetch method));
 
     $log->logdie(qq('fetch' method missing 'filename' argument))
         unless ( exists $args{filename} );
