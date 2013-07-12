@@ -270,12 +270,12 @@ print <<MOREHELP;
  - full     One line per file/directory attribute
  - more     Shows filename, date/time, size on one line, file attributes on
             the next line
- - simple   One file per line, with status flags in the left hand side.
+ - simple   One file per line, with status flags to the left of the filename
             Status flags:
-            - F = This object is a file
-            - D = This object is a directory
-            - S = file size mismatch
-            - ! = missing file on local system
+            - FF = This object is a file
+            - DD = This object is a directory
+            - FS = This object is a file, file size mismatch
+            - !! = File/directory is missing file on local system
 
  The default output format is "more".
 
