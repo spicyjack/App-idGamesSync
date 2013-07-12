@@ -197,7 +197,7 @@ print <<"EXAMPLES";
  # use a different format
  $our_name --path /path/to/your/idgames/dir --format simple
 
- # use a shortcut to show what needs to be updated
+ # use the "show what needs to be updated" shortcut (--size-local)
  $our_name --path /path/to/your/idgames/dir --format simple \
    --size-local --dry-run
 
