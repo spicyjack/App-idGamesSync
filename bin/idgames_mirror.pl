@@ -1965,213 +1965,214 @@ errors were encountered.
     my @synced_files;
     my $total_archive_files = 0;
     my $total_archive_size = 0;
-    $log->debug(qq(Fetching 'ls-laR.gz' file listing));
-    # if a custom URL was specified, use that here instead
-    my $lslar_url = $lwp->master_mirror;
-    if ( $cfg->defined(q(url)) ) {
-        $lslar_url = $cfg->get(q(url));
-    }
-    my $dl_file = $lwp->fetch(
-        filename => q(ls-laR.gz),
-        base_url => $lslar_url,
-    );
-    # returns undef if there was a problem fetching the file
-    if ( ! defined $dl_file ) {
-        $log->logdie(qq(Could not download ls-laR.gz file));
-    } else {
-        my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
-        $log->debug(qq(Set lslar_file to $lslar_file));
-        if ( ! $cfg->defined(q(dry-run)) ) {
-            my $in_fh = IO::File->new(qq(< $lslar_file));
-            my $file_digest;
-            # create the digest object outside of any nested blocks
-            my $md5 = Digest::MD5->new();
-            # get the digest for the local file, if the local file exists
-            if ( defined $in_fh ) {
-                $md5->addfile($in_fh);
-                # note this resets the digest contained in $md5
-                $file_digest = $md5->hexdigest();
-            } else {
-                # if there's no previous copy of the archive on disk, just use
-                # a bogus string for the checksum
-                $file_digest = q(bogus file digest);
-            }
-            # close the local file filehandle
-            $in_fh->close();
-            # get the digest for the downloaded file
-            my $dl_fh = IO::File->new(qq(< $dl_file));
-            # $md5 has already been reset with the call to hexdigest() above
-            $md5->addfile($dl_fh);
-            my $content_digest = $md5->hexdigest();
-            # close the filehandle
-            $dl_fh->close();
-            # check to see if the downloaded ls-laR.gz file is the same file
-            # on disk by comparing MD5 checksums for the buffer and file
-            if ( $file_digest ne $content_digest ) {
-                #my $out_fh = IO::File->new(qq(> $lslar_file));
-                print qq(ls-laR.gz Checksum mismatch...\n);
-                print qq(- Local copy: $file_digest\n);
-                print qq(- Archive copy: $content_digest\n);
-                print qq(- Replacing file: $lslar_file\n);
-                print qq(- With file: $dl_file\n);
-                move($dl_file, $lslar_file);
-            } else {
-                print qq(- $lslar_file matches mirror copy\n);
-                $log->debug(qq(Unlinking $dl_file));
-                unlink $dl_file;
-            }
-        } else {
-            $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
-            if ( ! -r $lslar_file ) {
-                $log->logdie(qq(Can't read file $lslar_file));
-            }
-        }
-        my $gunzip = IO::Uncompress::Gunzip->new($lslar_file, Append => 1);
-        $log->logdie(q(Could not create IO::Uncompress::Gunzip object; ) .
-            $GunzipError) unless (defined $gunzip);
-        my ($buffer, $uncompressed_bytes);
-        # keep reading into $buffer until we reach EOF
-        until ( $gunzip->eof() ) {
-            $uncompressed_bytes = $gunzip->read($buffer);
-        }
-        $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
+    my ($dl_file, $lslar_file);
 
+    if ( $cfg->defined(q(dry-run)) ) {
+        $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
+        $log->debug(qq(Set lslar_file to $lslar_file));
+        if ( ! -r $lslar_file ) {
+            $log->logdie(qq(Can't read file $lslar_file));
+        }
+    } else {
+        $log->debug(qq(Fetching 'ls-laR.gz' file listing));
+        # if a custom URL was specified, use that here instead
+        my $lslar_url = $lwp->master_mirror;
+        if ( $cfg->defined(q(url)) ) {
+            $lslar_url = $cfg->get(q(url));
+        }
+        # returns undef if there was a problem fetching the file
+        $dl_file = $lwp->fetch(
+            filename => q(ls-laR.gz),
+            base_url => $lslar_url,
+        );
+        if ( ! defined $dl_file ) {
+            $log->logdie(qq(Could not download ls-laR.gz file));
+        }
+
+        my $in_fh = IO::File->new(qq(< $lslar_file));
+        my $file_digest;
+        # create the digest object outside of any nested blocks
+        my $md5 = Digest::MD5->new();
+        # get the digest for the local file, if the local file exists
+        if ( defined $in_fh ) {
+            $md5->addfile($in_fh);
+            # note this resets the digest contained in $md5
+            $file_digest = $md5->hexdigest();
+        } else {
+            # if there's no previous copy of the archive on disk, just use
+            # a bogus string for the checksum
+            $file_digest = q(bogus file digest);
+        }
+        # close the local file filehandle
+        $in_fh->close();
+        # get the digest for the downloaded file
+        my $dl_fh = IO::File->new(qq(< $dl_file));
+        # $md5 has already been reset with the call to hexdigest() above
+        $md5->addfile($dl_fh);
+        my $content_digest = $md5->hexdigest();
+        # close the filehandle
+        $dl_fh->close();
+        # check to see if the downloaded ls-laR.gz file is the same file
+        # on disk by comparing MD5 checksums for the buffer and file
+        if ( $file_digest ne $content_digest ) {
+            #my $out_fh = IO::File->new(qq(> $lslar_file));
+            print qq(ls-laR.gz Checksum mismatch...\n);
+            print qq(- Local copy: $file_digest\n);
+            print qq(- Archive copy: $content_digest\n);
+            print qq(- Replacing file: $lslar_file\n);
+            print qq(- With file: $dl_file\n);
+            move($dl_file, $lslar_file);
+        } else {
+            print qq(- $lslar_file matches mirror copy\n);
+            $log->debug(qq(Unlinking $dl_file));
+            unlink $dl_file;
+        }
         # exit here if --update-ls-lar was used
         if ( $cfg->defined(q(update-ls-lar)) ) {
             print qq(- ls-laR.gz downloaded, exiting program\n);
             exit 0;
         }
+    }
 
-        # nope, continue to parse the ls-laR.gz file
-        my $counter = 0;
-        my $current_dir;
-        foreach my $line ( split(/\n/, $buffer) ) {
-            # skip blank lines
-            next if ( $line =~ /^$/ );
-            $log->debug(qq(line: $line));
-            my @fields = split(/\s+/, $line);
-            my $name_field;
-            # we're not expecting any more than TOTAL_FIELDS fields returned
-            # from the above split() call
-            if ( scalar(@fields) > TOTAL_FIELDS ) {
-                $log->debug(q(HEY! got ) . scalar(@fields) . qq( fields!));
-                my @name_fields = splice(@fields, NAME, scalar(@fields));
-                $log->debug(qq(name field had spaces; joined name is: )
-                    . join(q( ), @name_fields));
-                $name_field = join(q( ), @name_fields);
-            } else {
-                $name_field = $fields[NAME];
-            }
-            # a file, the directory bit will not be set in the listing output
-            if ( defined $name_field ) {
-                $log->debug(qq(Reassembled filename: '$name_field'));
-            }
-            if ( $fields[PERMS] =~ /^-.*/ ) {
-                $total_archive_files++;
-                # skip this file if it's inside the /incoming directory
-                next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
-                my $archive_file = Archive::File->new(
-                    parent          => $current_dir,
-                    perms           => $fields[PERMS],
-                    hardlinks       => $fields[HARDLINKS],
-                    owner           => $fields[OWNER],
-                    group           => $fields[GROUP],
-                    size            => $fields[SIZE],
-                    mod_time        => $fields[MONTH] . q( )
-                        . $fields[DATE] . q( ) . $fields[YEAR_TIME],
-                    name            => $name_field,
-                );
-                $total_archive_size += $archive_file->size;
-                my $local_file = Local::File->new(
-                    opts_path       => $cfg->get(q(path)),
-                    archive_obj    => $archive_file,
-                );
-                $report->write_record(
-                    archive_obj    => $archive_file,
-                    local_obj      => $local_file,
-                );
-                if ( ! $cfg->defined(q(dry-run)) ) {
-                    if ( $local_file->needs_sync() ) {
-                        if ( $local_file->sync(
-                                lwp             => $lwp,
-                                sync_dotfiles   => $cfg->get(q(dotfiles)) )
-                        ) {
-                            # add the file to the list of synced files
-                            # used later on in reporting
-                            push(@synced_files, $local_file);
-                        }
-                    }
-                }
-            # the directory bit is set in the listing output
-            } elsif ( $fields[PERMS] =~ /^d.*/ ) {
-                # skip this directory if it's inside the /incoming directory
-                next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
-                my $archive_dir = Archive::Directory->new(
-                    parent          => $current_dir,
-                    perms           => $fields[PERMS],
-                    hardlinks       => $fields[HARDLINKS],
-                    owner           => $fields[OWNER],
-                    group           => $fields[GROUP],
-                    size            => $fields[SIZE],
-                    mod_time        => $fields[MONTH] . q( )
-                        . $fields[DATE] . q( ) . $fields[YEAR_TIME],
-                    name            => $name_field,
-                    total_blocks    => 0,
-                );
-                my $local_dir = Local::Directory->new(
-                    opts_path       => $cfg->get(q(path)),
-                    archive_obj    => $archive_dir,
-                );
-                $report->write_record(
-                    archive_obj    => $archive_dir,
-                    local_obj      => $local_dir,
-                );
-                if ( ! $cfg->defined(q(dry-run)) ) {
-                    if ( $local_dir->needs_sync() ) {
-                        $local_dir->sync(
+    my $gunzip = IO::Uncompress::Gunzip->new($lslar_file, Append => 1);
+    $log->logdie(q(Could not create IO::Uncompress::Gunzip object; ) .
+        $GunzipError) unless (defined $gunzip);
+    my ($buffer, $uncompressed_bytes);
+    # keep reading into $buffer until we reach EOF
+    until ( $gunzip->eof() ) {
+        $uncompressed_bytes = $gunzip->read($buffer);
+    }
+    $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
+
+    # parse the ls-laR.gz file
+    my $counter = 0;
+    my $current_dir;
+    foreach my $line ( split(/\n/, $buffer) ) {
+        # skip blank lines
+        next if ( $line =~ /^$/ );
+        $log->debug(qq(line: $line));
+        my @fields = split(/\s+/, $line);
+        my $name_field;
+        # we're not expecting any more than TOTAL_FIELDS fields returned
+        # from the above split() call
+        if ( scalar(@fields) > TOTAL_FIELDS ) {
+            $log->debug(q(HEY! got ) . scalar(@fields) . qq( fields!));
+            my @name_fields = splice(@fields, NAME, scalar(@fields));
+            $log->debug(qq(name field had spaces; joined name is: )
+                . join(q( ), @name_fields));
+            $name_field = join(q( ), @name_fields);
+        } else {
+            $name_field = $fields[NAME];
+        }
+        # a file, the directory bit will not be set in the listing output
+        if ( defined $name_field ) {
+            $log->debug(qq(Reassembled filename: '$name_field'));
+        }
+        if ( $fields[PERMS] =~ /^-.*/ ) {
+            $total_archive_files++;
+            # skip this file if it's inside the /incoming directory
+            next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
+            my $archive_file = Archive::File->new(
+                parent          => $current_dir,
+                perms           => $fields[PERMS],
+                hardlinks       => $fields[HARDLINKS],
+                owner           => $fields[OWNER],
+                group           => $fields[GROUP],
+                size            => $fields[SIZE],
+                mod_time        => $fields[MONTH] . q( )
+                    . $fields[DATE] . q( ) . $fields[YEAR_TIME],
+                name            => $name_field,
+            );
+            $total_archive_size += $archive_file->size;
+            my $local_file = Local::File->new(
+                opts_path       => $cfg->get(q(path)),
+                archive_obj    => $archive_file,
+            );
+            $report->write_record(
+                archive_obj    => $archive_file,
+                local_obj      => $local_file,
+            );
+            if ( ! $cfg->defined(q(dry-run)) ) {
+                if ( $local_file->needs_sync() ) {
+                    if ( $local_file->sync(
                             lwp             => $lwp,
-                            sync_dotfiles   => $cfg->get(q(dotfiles)),
-                        );
+                            sync_dotfiles   => $cfg->get(q(dotfiles)) )
+                    ) {
+                        # add the file to the list of synced files
+                        # used later on in reporting
+                        push(@synced_files, $local_file);
                     }
                 }
-            # A new directory entry
-            } elsif ( $fields[PERMS] =~ /^\.[\/\w\-_\.]*:$/ ) {
-                print qq(=== Entering directory: )
-                    . $fields[PERMS] . qq( ===\n)
-                    if ( $cfg->defined(q(headers)) );
-                # scrape out the directory name sans trailing colon
-                $current_dir = $fields[PERMS];
-                $current_dir =~ s/:$//;
-                $current_dir =~ s/^\.//;
-                $log->debug(qq(Parsing subdirectory: $current_dir));
-                if ( $current_dir =~ /^\/incoming.*/ ) {
-                    $log->debug(q(/incoming directory; setting flag));
-                    $incoming_dir_flag = 1;
-                } else {
-                    $log->debug(qq(Setting current directory to: $current_dir));
-                    $log->debug(q(Clearing /incoming directory flag));
-                    $incoming_dir_flag = 0;
-                }
-            } elsif ( $line =~ /^total (\d+)$/ ) {
-                # $1 got populated in the regex above
-                my $dir_blocks = $1;
-                print qq(- total blocks taken by this directory: $dir_blocks\n)
-                    if ( $cfg->defined(q(headers)) );
-            } elsif ( $line =~ /^lrwxrwxrwx.*/ ) {
-                print qq(- found a symlink: $current_dir\n)
-                    if ( $log->is_info() );
-            } else {
-                $log->warn(qq(Unknown line found in input data; >$line<));
             }
-            $counter++;
-            #if ( $log->is_debug() ) {
-            #    if ( $counter == DEBUG_LOOPS ) {
-            #        $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
-            #        exit 0;
-            #    }
-            #}
-        } # foreach my $line ( split(/\n/, $buffer) )
-    } # if ( ! defined $dl_file )
+        # the directory bit is set in the listing output
+        } elsif ( $fields[PERMS] =~ /^d.*/ ) {
+            # skip this directory if it's inside the /incoming directory
+            next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
+            my $archive_dir = Archive::Directory->new(
+                parent          => $current_dir,
+                perms           => $fields[PERMS],
+                hardlinks       => $fields[HARDLINKS],
+                owner           => $fields[OWNER],
+                group           => $fields[GROUP],
+                size            => $fields[SIZE],
+                mod_time        => $fields[MONTH] . q( )
+                    . $fields[DATE] . q( ) . $fields[YEAR_TIME],
+                name            => $name_field,
+                total_blocks    => 0,
+            );
+            my $local_dir = Local::Directory->new(
+                opts_path       => $cfg->get(q(path)),
+                archive_obj    => $archive_dir,
+            );
+            $report->write_record(
+                archive_obj    => $archive_dir,
+                local_obj      => $local_dir,
+            );
+            if ( ! $cfg->defined(q(dry-run)) ) {
+                if ( $local_dir->needs_sync() ) {
+                    $local_dir->sync(
+                        lwp             => $lwp,
+                        sync_dotfiles   => $cfg->get(q(dotfiles)),
+                    );
+                }
+            }
+        # A new directory entry
+        } elsif ( $fields[PERMS] =~ /^\.[\/\w\-_\.]*:$/ ) {
+            print qq(=== Entering directory: )
+                . $fields[PERMS] . qq( ===\n)
+                if ( $cfg->defined(q(headers)) );
+            # scrape out the directory name sans trailing colon
+            $current_dir = $fields[PERMS];
+            $current_dir =~ s/:$//;
+            $current_dir =~ s/^\.//;
+            $log->debug(qq(Parsing subdirectory: $current_dir));
+            if ( $current_dir =~ /^\/incoming.*/ ) {
+                $log->debug(q(/incoming directory; setting flag));
+                $incoming_dir_flag = 1;
+            } else {
+                $log->debug(qq(Setting current directory to: $current_dir));
+                $log->debug(q(Clearing /incoming directory flag));
+                $incoming_dir_flag = 0;
+            }
+        } elsif ( $line =~ /^total (\d+)$/ ) {
+            # $1 got populated in the regex above
+            my $dir_blocks = $1;
+            print qq(- total blocks taken by this directory: $dir_blocks\n)
+                if ( $cfg->defined(q(headers)) );
+        } elsif ( $line =~ /^lrwxrwxrwx.*/ ) {
+            print qq(- found a symlink: $current_dir\n)
+                if ( $log->is_info() );
+        } else {
+            $log->warn(qq(Unknown line found in input data; >$line<));
+        }
+        $counter++;
+        #if ( $log->is_debug() ) {
+        #    if ( $counter == DEBUG_LOOPS ) {
+        #        $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
+        #        exit 0;
+        #    }
+        #}
+    } # foreach my $line ( split(/\n/, $buffer) )
     $stats->stop_timer();
     $stats->write_stats(
         synced_files            => \@synced_files,
