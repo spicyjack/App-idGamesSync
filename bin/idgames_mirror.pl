@@ -214,7 +214,7 @@ print <<EXAMPLES;
 
 EXAMPLES
 
-} # sub examples
+}
 
 =item show_morehelp
 
@@ -786,7 +786,7 @@ sub sync {
         }
     }
     return 0;
-} # sub sync
+}
 
 =item needs_sync
 
@@ -836,7 +836,7 @@ sub exists {
     } else {
         return undef;
     }
-} # sub exists
+}
 
 =item is_dotfile
 
@@ -854,7 +854,7 @@ sub is_dotfile {
     my $checkname = $self->name;
     # return the number of matches, 0 or 1
     return scalar(grep(/$checkname/, @_dotfiles));
-} # sub is_dotfile
+}
 
 =item append_notes
 
@@ -1311,7 +1311,7 @@ $l->notes
     $~ = q(FULL);
     write();
 
-} # sub format_record
+}
 
 
 =head2 LWP::Wrapper
@@ -1464,7 +1464,7 @@ sub get_random_mirror {
     my $self = shift;
     my $url_index = rand(@usable_mirrors);
     return $usable_mirrors[$url_index];
-} # sub get_random_mirror
+}
 
 =item get_base_url
 
@@ -1486,7 +1486,7 @@ sub get_base_url {
 
     $log->debug(LOGNAME . qq(: get_base_url; returning: $base_url));
     return $base_url;
-} # sub get_base_url
+}
 
 =item fetch
 
@@ -1601,7 +1601,7 @@ sub fetch {
         print qq(- Download successful; content length: $size\n);
         return $fh->filename;
     }
-} # sub fetch
+}
 
 =item get_mirror_list
 
@@ -1755,7 +1755,7 @@ sub write_stats {
         . $nf->format_bytes($total_synced_bytes) . qq(\n);
     print qq(- Total script execution time: )
         . tv_interval ( $start_time, $stop_time ) . qq( seconds\n);
-} # sub write_stats
+}
 
 =back
 
