@@ -17,6 +17,10 @@ Version v0.0.3
 
 use version; our $VERSION = qv('0.0.3');
 
+# shortcut to get the name of the file this script lives in
+use File::Basename;
+our $our_name = basename $0;
+
 =head1 SYNOPSIS
 
 Create or update a mirror of the C<idgames> archive on the local host.
@@ -184,31 +188,42 @@ Show examples of script usage.
 
 sub show_examples {
 
-print <<EXAMPLES;
+print <<"EXAMPLES";
 
- Usage Examples:
+ Basic Usage Examples:
+
+ $our_name --path /path/to/your/idgames/dir
+
+ # use a different format
+ $our_name --path /path/to/your/idgames/dir --format simple
+
+ # use a shortcut to show what needs to be updated
+ $our_name --path /path/to/your/idgames/dir --format simple \
+   --size-local --dry-run
+
+ More Complex Usage Examples:
 
  # use a specific mirror, the 'more' output format
- idgames_mirror.pl --url http://example.com --format more \
+ $our_name --url http://example.com --format more \
     --path /path/to/your/idgames/dir
 
  # specific mirror, 'simple' output format, show missing local files
  # and files that are different sizes between local and the mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \
     --url http://example.com --format simple --type size --type local
 
  # same as above, with shortcut options
- idgames_mirror.pl --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \
     --url http://example.com --format simple --size-local
 
  # use random mirrors, exclude a specific mirror
- idgames_mirror.pl --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \
     --exclude http://some-mirror-server.example.com \
     --size-local --format more
 
  # use random mirrors, exclude a specific mirror,
  # specify temporary directory
- idgames_mirror.pl --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \
     --exclude http://some-mirror-server.example.com \
     --size-local --format more --tempdir /path/to/temp/dir
 
