@@ -665,9 +665,9 @@ sub BUILD {
     my $self = shift;
 
     my $log = Log::Log4perl->get_logger();
-    $log->logdie(qq('new' method missing 'opts_path' argument))
+    $log->logdie(qq(missing 'opts_path' argument))
         unless ( defined $self->opts_path );
-    $log->logdie(qq('new' method missing 'archive_obj' argument))
+    $log->logdie(qq(missing 'archive_obj' argument))
         unless ( defined $self->archive_obj );
 
     # the archive file object
@@ -743,9 +743,9 @@ sub sync {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->logdie(qq('sync' method missing 'lwp' argument))
+    $log->logdie(qq(missing 'lwp' argument))
         unless ( defined $args{lwp} );
-    $log->logdie(qq('sync' method missing 'sync_dotfiles' argument))
+    $log->logdie(qq(missing 'sync_dotfiles' argument))
         unless ( defined $args{sync_dotfiles} );
 
     # exit if we're not printing dotfiles
@@ -1138,9 +1138,9 @@ sub write_record {
 
     my $log = Log::Log4perl->get_logger();
 
-    $log->logdie(qq('write_record' method missing 'archive_obj' object))
+    $log->logdie(qq(missing 'archive_obj' object))
         unless ( exists $args{archive_obj} );
-    $log->logdie(qq('write_record' method missing 'local_obj' object))
+    $log->logdie(qq(missing 'local_obj' object))
         unless ( exists $args{local_obj} );
 
     my $a = $args{archive_obj};
@@ -1531,7 +1531,7 @@ sub fetch {
 
     my $log = Log::Log4perl->get_logger();
 
-    $log->logdie(qq('fetch' method missing 'filename' argument))
+    $log->logdie(qq(missing 'filename' argument))
         unless ( exists $args{filename} );
 
     my $filename = $args{filename};
@@ -1731,11 +1731,11 @@ sub write_stats {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->logdie(qq('fetch' method missing 'synced_files' argument))
+    $log->logdie(qq(missing 'synced_files' argument))
         unless ( exists $args{synced_files} );
-    $log->logdie(qq('fetch' method missing 'total_archive_files' argument))
+    $log->logdie(qq(missing 'total_archive_files' argument))
         unless ( exists $args{total_archive_files} );
-    $log->logdie(qq('fetch' method missing 'total_archive_size' argument))
+    $log->logdie(qq(missing 'total_archive_size' argument))
         unless ( exists $args{total_archive_size} );
 
     my $total_synced_bytes = 0;
