@@ -1665,6 +1665,22 @@ my ($start_time, $stop_time);
 
 =over
 
+=item dry_run
+
+Whether C<--dry-run> was specified on the command line.  This will
+change the status blurb that is output at the completion of the script
+to say "Total [files|bytes] to be synced..." instead of
+"Total [files|bytes] synced...".
+
+=cut
+
+has q(dry_run) => (
+    is      => q(rw),
+    isa     => q(Bool),
+);
+
+=over
+
 =item total_synced_bytes
 
 The amount of data in bytes synced from the mirror server.
@@ -1760,16 +1776,26 @@ sub write_stats {
         $total_synced_bytes += $synced->size;
     }
     my $nf = Number::Format->new();
-    print qq(- Total files listed in archive: ) . $args{total_archive_files}
-        . qq(\n);
-    print qq(- Total size of files in archive: )
+    my $output;
+    $output = qq(- Total files listed in archive: )
+        . $args{total_archive_files} . qq(\n);
+    $output .= qq(- Total size of files in archive: )
         . $nf->format_bytes($args{total_archive_size}) . qq(\n);
-    print qq(- Total files synced from archive: )
-        . scalar(@synced_files) . qq(\n);
-    print qq(- Total bytes synced from archive: )
-        . $nf->format_bytes($total_synced_bytes) . qq(\n);
-    print qq(- Total script execution time: )
+    if ( $self->dry_run ) {
+        $output .= qq(- Total files to be synced from archive: );
+    } else {
+        $output .= qq(- Total files synced from archive: );
+    }
+    $output .= scalar(@synced_files) . qq(\n);
+    if ( $self->dry_run ) {
+        $output .= qq(- Total bytes to be synced from archive: );
+    } else {
+        $output .= qq(- Total bytes synced from archive: );
+    }
+    $output .= $nf->format_bytes($total_synced_bytes) . qq(\n);
+    $output .= qq(- Total script execution time: )
         . tv_interval ( $start_time, $stop_time ) . qq( seconds\n);
+    print $output;
 }
 
 =back
@@ -1950,7 +1976,10 @@ errors were encountered.
         $cfg->set(q(dotfiles), 0);
     }
 
-    my $stats = Runtime::Stats->new( report_format => $report_format );
+    my $stats = Runtime::Stats->new(
+        dry_run       => $cfg->defined(q(dry-run)),
+        report_format => $report_format
+    );
     $stats->start_timer();
 
     my $report = Reporter->new(
