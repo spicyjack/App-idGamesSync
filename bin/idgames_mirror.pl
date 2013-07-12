@@ -66,7 +66,6 @@ our @options = (
     q(exclude|e=s@), # URLs to exclude when pulling from mirrors
     q(format|f=s), # reporting format
     q(path|p=s), # output path
-    q(sync|s), # synchronize files from the mirror to the local filesystem
     q(type|t=s@), # what type of information to report
     q(url|u=s), # URL to use for mirroring
     # logging options
@@ -79,7 +78,6 @@ our @options = (
     q(headers), # show directory headers and blocks used
     q(tempdir=s), # temporary directory to use for tempfiles
     q(update-ls-lar), # update the ls-laR.gz file, then exit
-    q(use-local-ls-lar), # use the local copy of ls-laR.gz file to check files
     # combination options
     q(size-local|local-size|sl), # show size mismatches, missing local files
     q(size-same|ss), # show size mismatches and missing local files
@@ -100,7 +98,6 @@ our @options = (
  -n|--dry-run       Don't mirror content, explain script actions instead
  -e|--exclude       Don't use these mirror URL(s) for syncing
  -p|--path          Path to mirror the idgames archive to
- -s|--sync          Synchronize files from mirror to local machine
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
@@ -115,7 +112,6 @@ our @options = (
  --incoming         Show files located in the /incoming directory
  --tempdir          Temporary directory to use when downloading files
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
- --use-local-ls-lar Always use the local copy of the 'ls-laR.gz' file
 
 =head1 DESCRIPTION
 
@@ -1971,9 +1967,7 @@ errors were encountered.
     } else {
         my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
         $log->debug(qq(Set lslar_file to $lslar_file));
-        if ( ( $cfg->defined(q(sync)) || $cfg->defined(q(update-ls-lar)) )
-            && ! $cfg->defined(q(use-local-ls-lar))
-            ) {
+        if ( ! $cfg->defined(q(dry-run)) ) {
             my $in_fh = IO::File->new(qq(< $lslar_file));
             my $file_digest;
             # create the digest object outside of any nested blocks
@@ -2001,7 +1995,7 @@ errors were encountered.
             # on disk by comparing MD5 checksums for the buffer and file
             if ( $file_digest ne $content_digest ) {
                 #my $out_fh = IO::File->new(qq(> $lslar_file));
-                print qq(ls-laR.gz Checksum mismatch!\n);
+                print qq(ls-laR.gz Checksum mismatch...\n);
                 print qq(- Local copy: $file_digest\n);
                 print qq(- Archive copy: $content_digest\n);
                 print qq(- Replacing file: $lslar_file\n);
@@ -2012,7 +2006,7 @@ errors were encountered.
                 $log->debug(qq(Unlinking $dl_file));
                 unlink $dl_file;
             }
-        } elsif ( $cfg->defined(q(use-local-ls-lar)) ) {
+        } else {
             $lslar_file = $cfg->get(q(path)) . q(/ls-laR.gz);
             if ( ! -r $lslar_file ) {
                 $log->logdie(qq(Can't read file $lslar_file));
@@ -2027,10 +2021,14 @@ errors were encountered.
             $uncompressed_bytes = $gunzip->read($buffer);
         }
         $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
+
+        # exit here if --update-ls-lar was used
         if ( $cfg->defined(q(update-ls-lar)) ) {
             print qq(- ls-laR.gz downloaded, exiting program\n);
             exit 0;
         }
+
+        # nope, continue to parse the ls-laR.gz file
         my $counter = 0;
         my $current_dir;
         foreach my $line ( split(/\n/, $buffer) ) {
@@ -2078,7 +2076,7 @@ errors were encountered.
                     archive_obj    => $archive_file,
                     local_obj      => $local_file,
                 );
-                if ( $cfg->defined(q(sync)) ) {
+                if ( ! $cfg->defined(q(dry-run)) ) {
                     if ( $local_file->needs_sync() ) {
                         if ( $local_file->sync(
                                 lwp             => $lwp,
@@ -2114,7 +2112,7 @@ errors were encountered.
                     archive_obj    => $archive_dir,
                     local_obj      => $local_dir,
                 );
-                if ( $cfg->defined(q(sync)) ) {
+                if ( ! $cfg->defined(q(dry-run)) ) {
                     if ( $local_dir->needs_sync() ) {
                         $local_dir->sync(
                             lwp             => $lwp,
