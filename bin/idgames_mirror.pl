@@ -2120,12 +2120,15 @@ errors were encountered.
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
             );
-            if ( ! $cfg->defined(q(dry-run)) ) {
-                if ( $local_file->needs_sync() ) {
-                    if ( $local_file->sync(
+            if ( $local_file->needs_sync() ) {
+                if ( $cfg->defined(q(dry-run)) ) {
+                    push(@synced_files, $archive_file);
+                } else {
+                    my $sync_status = $local_file->sync(
                             lwp             => $lwp,
-                            sync_dotfiles   => $cfg->get(q(dotfiles)) )
-                    ) {
+                            sync_dotfiles   => $cfg->get(q(dotfiles))
+                    );
+                    if ( $sync_status ) {
                         # add the file to the list of synced files
                         # used later on in reporting
                         push(@synced_files, $local_file);
@@ -2156,8 +2159,8 @@ errors were encountered.
                 archive_obj    => $archive_dir,
                 local_obj      => $local_dir,
             );
-            if ( ! $cfg->defined(q(dry-run)) ) {
-                if ( $local_dir->needs_sync() ) {
+            if ( $local_dir->needs_sync() ) {
+                if ( ! $cfg->defined(q(dry-run)) ) {
                     $local_dir->sync(
                         lwp             => $lwp,
                         sync_dotfiles   => $cfg->get(q(dotfiles)),
