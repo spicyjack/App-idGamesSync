@@ -1875,7 +1875,6 @@ errors were encountered.
         } elsif ( defined $ENV{TMPDIR} ) {
             $cfg->set(q(tempdir), $ENV{TMPDIR})
         } else {
-            # FIXME this only works on UNIX-y platforms
             $cfg->set(q(tempdir), q(/tmp));
         }
     }
