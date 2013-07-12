@@ -1994,15 +1994,14 @@ errors were encountered.
     my @synced_files;
     my $total_archive_files = 0;
     my $total_archive_size = 0;
-    my ($dl_file, $lslar_file);
+    my $dl_file;
+    my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
+    $log->debug(qq(Set lslar_file to $lslar_file));
+    if ( ! -r $lslar_file ) {
+        $log->logdie(qq(Can't read file $lslar_file));
+    }
 
-    if ( $cfg->defined(q(dry-run)) ) {
-        $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
-        $log->debug(qq(Set lslar_file to $lslar_file));
-        if ( ! -r $lslar_file ) {
-            $log->logdie(qq(Can't read file $lslar_file));
-        }
-    } else {
+    if ( ! $cfg->defined(q(dry-run)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
         my $lslar_url = $lwp->master_mirror;
@@ -2052,7 +2051,7 @@ errors were encountered.
             print qq(- With file: $dl_file\n);
             move($dl_file, $lslar_file);
         } else {
-            print qq(- $lslar_file matches mirror copy\n);
+            print qq(- $lslar_file and mirror copy match!\n);
             $log->debug(qq(Unlinking $dl_file));
             unlink $dl_file;
         }
