@@ -1622,7 +1622,7 @@ sub fetch {
                    = stat($fh);
         print q(- Download successful; downloaded )
             . $nf->format_bytes($size)
-            . qq|byte(s)\n|;
+            . qq| byte(s)\n|;
         return $fh->filename;
     }
 }
