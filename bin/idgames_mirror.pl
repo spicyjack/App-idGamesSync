@@ -1347,6 +1347,7 @@ package LWP::Wrapper;
 use File::Temp;
 use LWP::UserAgent;
 use Mouse;
+use Number::Format;
 
 use constant {
     LOGNAME     => __PACKAGE__,
@@ -1582,6 +1583,9 @@ sub fetch {
     my $fh = File::Temp->new( %temp_args );
     $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename );
 
+    # for formatting downloaded file sizes
+    my $nf = Number::Format->new();
+
     # grab the file
     $log->debug(LOGNAME . qq(: Fetching file: )
         . $base_url . $filename . qq(\n));
@@ -1616,7 +1620,9 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print qq|- Download successful; downloaded $size byte(s)\n|;
+        print q(- Download successful; downloaded )
+            . $nf->format_bytes($size)
+            . qq|byte(s)\n|;
         return $fh->filename;
     }
 }
