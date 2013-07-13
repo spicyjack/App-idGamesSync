@@ -780,7 +780,7 @@ sub sync {
         if ( ref($self) eq q(Local::File) ) {
             my $temp_file = $lwp->fetch( filename => $self->short_path );
             if ( defined $temp_file ) {
-                print qq( Writing file: ) . $self->absolute_path . qq(\n);
+                print qq(- Writing file: ) . $self->absolute_path . qq(\n);
                 move($temp_file, $self->absolute_path );
             }
             return 1;
@@ -1613,7 +1613,7 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print qq(- Download successful; content length: $size\n);
+        print qq|- Download successful; downloaded $size byte(s)\n|;
         return $fh->filename;
     }
 }
@@ -2044,7 +2044,7 @@ errors were encountered.
         # on disk by comparing MD5 checksums for the buffer and file
         if ( $file_digest ne $content_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
-            print qq(ls-laR.gz Checksum mismatch...\n);
+            print qq(- ls-laR.gz Checksum mismatch...\n);
             print qq(- Local copy: $file_digest\n);
             print qq(- Archive copy: $content_digest\n);
             print qq(- Replacing file: $lslar_file\n);
@@ -2131,7 +2131,7 @@ errors were encountered.
                     if ( $sync_status ) {
                         # add the file to the list of synced files
                         # used later on in reporting
-                        push(@synced_files, $local_file);
+                        push(@synced_files, $archive_file);
                     }
                 }
             }
