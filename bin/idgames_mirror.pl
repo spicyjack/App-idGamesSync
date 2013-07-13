@@ -817,16 +817,16 @@ sub needs_sync {
     my $log = Log::Log4perl->get_logger();
 
     if ( $self->short_status eq IS_MISSING ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: File is missing from local system));
+        $log->debug(q(File is missing from local system:));
+        $log->debug(q(-> ) . $self->absolute_path);
         return 1;
     } elsif ( $self->short_status eq DIFF_SIZE ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: Local file different size than archive));
+        $log->debug(q(Local file different size than archive:));
+        $log->debug(q(-> ) . $self->absolute_path);
         return 1;
     } else {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: File/dir does not need to be sync'ed));
+        $log->debug(q(File/dir does not need to be sync'ed));
+        $log->debug(q(-> ) . $self->absolute_path);
         return 0;
     }
 }
@@ -1168,7 +1168,7 @@ sub write_record {
     # - file is different sizes between local and archive, and 'size' is set
     # - file is the same size between local and archive, and 'same' is set
     # - 'all' is set
-    # headers:local:archive:size:same
+    # report types: headers:local:archive:size:same
     # missing files
     my $checkname = $a->name;
     my $grepcheck = scalar(grep(/$checkname/, @_dotfiles));
