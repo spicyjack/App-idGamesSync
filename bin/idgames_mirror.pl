@@ -685,6 +685,9 @@ sub BUILD {
     $log->logdie(qq(missing 'archive_obj' argument))
         unless ( defined $self->archive_obj );
 
+    # remove trailing slashes
+    $self->opts_path =~ s/\/$//;
+
     # the archive file object
     my $archive = $self->archive_obj;
 
