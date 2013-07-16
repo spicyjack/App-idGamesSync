@@ -686,7 +686,11 @@ sub BUILD {
         unless ( defined $self->archive_obj );
 
     # remove trailing slashes
-    $self->opts_path =~ s/\/$//;
+    if ( $self->opts_path =~ /\/$/ ) {
+        my $opts_path = $self->opts_path;
+        $opts_path =~ s/\/+$//;
+        $self->opts_path($opts_path);
+    }
 
     # the archive file object
     my $archive = $self->archive_obj;
@@ -900,7 +904,7 @@ the C<short_path()> attribute.
 
 sub absolute_path {
     my $self = shift;
-    return $self->opts_path . $self->short_path;
+    return $self->opts_path . q(/) . $self->short_path;
 }
 
 =back
