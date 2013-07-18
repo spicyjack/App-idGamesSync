@@ -763,6 +763,34 @@ sub BUILD {
     }
 }
 
+=item needs_sync
+
+Tests to see if this file/directory object needs to be synchronized with the
+mirror.  Returns C<1> for true if the file/directory needs to be synchronized,
+and C<0> for false.
+
+=cut
+
+sub needs_sync {
+    my $self = shift;
+
+    my $log = Log::Log4perl->get_logger();
+
+    if ( $self->short_status eq IS_MISSING ) {
+        $log->debug(q(File is missing from local system:));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 1;
+    } elsif ( $self->short_status eq DIFF_SIZE ) {
+        $log->debug(q(Local file different size than archive:));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 1;
+    } else {
+        $log->debug(q(File/dir does not need to be sync'ed));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 0;
+    }
+}
+
 =item sync
 
 Syncs a remote file or directory to the local system.  Local directories are
@@ -818,34 +846,6 @@ sub sync {
         }
     }
     return 0;
-}
-
-=item needs_sync
-
-Tests to see if this file/directory object needs to be synchronized with the
-mirror.  Returns C<1> for true if the file/directory needs to be synchronized,
-and C<0> for false.
-
-=cut
-
-sub needs_sync {
-    my $self = shift;
-
-    my $log = Log::Log4perl->get_logger();
-
-    if ( $self->short_status eq IS_MISSING ) {
-        $log->debug(q(File is missing from local system:));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 1;
-    } elsif ( $self->short_status eq DIFF_SIZE ) {
-        $log->debug(q(Local file different size than archive:));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 1;
-    } else {
-        $log->debug(q(File/dir does not need to be sync'ed));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 0;
-    }
 }
 
 =item exists
