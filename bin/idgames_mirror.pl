@@ -2013,6 +2013,7 @@ errors were encountered.
         $log->logdie(qq(Can't read file $lslar_file));
     }
 
+    ### UPDATE LS-LAR.GZ
     if ( ! $cfg->defined(q(dry-run)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
