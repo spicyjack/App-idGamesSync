@@ -554,6 +554,17 @@ has opts_path => (
     isa     => q(Str),
 );
 
+=item absolute_path
+
+The absolute path to this file or directory, from the filesystem root.
+
+=cut
+
+has absolute_path => (
+    is      => q(rw),
+    isa     => q(Str),
+);
+
 =item archive_obj
 
 The Archive object that his object is based off of.
@@ -685,23 +696,22 @@ sub BUILD {
     $log->logdie(qq(missing 'archive_obj' argument))
         unless ( defined $self->archive_obj );
 
-    # remove trailing slashes
-    if ( $self->opts_path =~ /\/$/ ) {
-        my $opts_path = $self->opts_path;
-        $opts_path =~ s/\/+$//;
-        $self->opts_path($opts_path);
-    }
-
     # the archive file object
     my $archive = $self->archive_obj;
 
-    $self->name($archive->name );
-    $self->parent($archive->parent);
+    # set up parent dir and short path
+    $self->name($archive->name);
+    my $parent_dir = $archive->parent;
+    # trim leading slash, it will be added back later
+    $parent_dir =~ s/^\///;
+    $self->parent($parent_dir);
     if ( length($self->parent) > 0 ) {
         $self->short_path($self->parent . q(/) . $self->name);
     } else {
-        $self->short_path(q(/) . $self->name);
+        $self->short_path($self->name);
     }
+
+    $self->absolute_path($self->opts_path . $self->short_path);
     $log->debug(qq(Creating stat object using local file/dir; ));
     $log->debug(q(Local file/dir: ) . $self->absolute_path);
     my $stat = stat( $self->absolute_path );
@@ -892,19 +902,6 @@ sub append_notes {
     if ( defined $notes ) {
         $self->notes($notes . $new_notes);
     }
-}
-
-=item absolute_path
-
-The absolute path to a file on the local filesystem.  This path is generated
-using the contents of the C<--path> command line switch, and the contents of
-the C<short_path()> attribute.
-
-=cut
-
-sub absolute_path {
-    my $self = shift;
-    return $self->opts_path . q(/) . $self->short_path;
 }
 
 =back
@@ -1652,13 +1649,13 @@ Among other things, this object will help keep track of:
 
 =item Total script execution time
 
-=item Total files listed in archive
+=item Total files found in archive
 
 =item Total size of files listed in archive
 
-=item Total files retrieved (synchronized) from archive
+=item Total files (to be) retrieved/synchronized from archive
 
-=item Total bytes retrieved (synchronized) from archive
+=item Total bytes (to be) retrieved/synchronized from archive
 
 =back
 
@@ -1790,7 +1787,7 @@ sub write_stats {
     }
     my $nf = Number::Format->new();
     my $output;
-    $output = qq(- Total files listed in archive: )
+    $output = qq(- Total files found in archive: )
         . $args{total_archive_files} . qq(\n);
     $output .= qq(- Total size of files in archive: )
         . $nf->format_bytes($args{total_archive_size}) . qq(\n);
@@ -1833,7 +1830,7 @@ use Mouse; # sets strict and warnings
 
 
 use constant {
-    DEBUG_LOOPS => 20000,
+    DEBUG_LOOPS => 100,
     PERMS       => 0,
     HARDLINKS   => 1,
     OWNER       => 2,
@@ -1880,14 +1877,16 @@ errors were encountered.
     #} else {
     #    $incoming_dir_flag = 0;
     #}
+
+
     # default log level
     my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
-    if ( $cfg->defined(q(debug)) && ! $cfg->defined(q(verbose)) ) {
-        $log4perl_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif ( $cfg->defined(q(verbose)) && ! $cfg->defined(q(debug)) ) {
-        $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
-    } elsif ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
+    if ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
         die(q(Script called with --debug and --verbose; choose one!));
+    } elsif ( $cfg->defined(q(debug)) ) {
+        $log4perl_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
+    } elsif ( $cfg->defined(q(verbose)) ) {
+        $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     }
 
     # color log output
@@ -2088,7 +2087,7 @@ errors were encountered.
     # parse the ls-laR.gz file
     my $counter = 0;
     my $current_dir;
-    foreach my $line ( split(/\n/, $buffer) ) {
+    BUFFER: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
         $log->debug(qq(line: $line));
@@ -2189,12 +2188,16 @@ errors were encountered.
             $current_dir = $fields[PERMS];
             $current_dir =~ s/:$//;
             $current_dir =~ s/^\.//;
-            $log->debug(qq(Parsing subdirectory: $current_dir));
             if ( $current_dir =~ /^\/incoming.*/ ) {
+                $log->debug(qq(Parsing subdirectory: $current_dir));
                 $log->debug(q(/incoming directory; setting flag));
                 $incoming_dir_flag = 1;
             } else {
-                $log->debug(qq(Setting current directory to: $current_dir));
+                if ($current_dir =~ /^$/ ) {
+                    $log->debug(qq(Setting current directory to: <root>));
+                } else {
+                    $log->debug(qq(Setting current directory to: $current_dir));
+                }
                 $log->debug(q(Clearing /incoming directory flag));
                 $incoming_dir_flag = 0;
             }
@@ -2210,12 +2213,11 @@ errors were encountered.
             $log->warn(qq(Unknown line found in input data; >$line<));
         }
         $counter++;
-        #if ( $log->is_debug() ) {
-        #    if ( $counter == DEBUG_LOOPS ) {
-        #        $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
-        #        exit 0;
-        #    }
-        #}
+        if ( $log->is_debug() ) {
+            if ( $counter == DEBUG_LOOPS ) {
+                last BUFFER;
+            }
+        }
     } # foreach my $line ( split(/\n/, $buffer) )
     $stats->stop_timer();
     $stats->write_stats(
