@@ -1902,7 +1902,7 @@ errors were encountered.
     $log4perl_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
-        . qq|= [%6r] %p{1} %L (%M{1}) %m%n\n|;
+        . qq|= [%6r] %p{1} %4L (%M{1}) %m%n\n|;
 
     Log::Log4perl->init(\$log4perl_conf);
     my $log = Log::Log4perl->get_logger();
