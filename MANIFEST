@@ -2,6 +2,7 @@ Changes
 MANIFEST
 Makefile.PL
 README
+bin/idgames_sync.pl
 t/00-load.t
 t/pod-coverage.t
 t/pod.t
