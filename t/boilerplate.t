@@ -48,7 +48,7 @@ TODO: {
     "placeholder date/time"       => qr(Date/time)
   );
 
-  module_boilerplate_ok('bin/idgames_mirror.pl');
+  module_boilerplate_ok('bin/idgames_sync.pl');
 
 
 }

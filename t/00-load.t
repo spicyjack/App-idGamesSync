@@ -3,7 +3,7 @@
 use Test::More tests => 1;
 
 BEGIN {
-#use_ok( 'App::idGamesMirror::Tools' );
+#use_ok( 'App::idGamesSync' );
 }
 
 diag( "Testing, Perl $], $^X" );

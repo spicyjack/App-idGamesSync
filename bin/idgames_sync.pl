@@ -3,11 +3,11 @@
 # Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>
 
 # For support with this file, please file an issue on the GitHub issue
-# tracker: https://github.com/spicyjack/App-idGamesMirror/issues
+# tracker: https://github.com/spicyjack/App-idGamesSync/issues
 
 =head1 NAME
 
-idgames_mirror.pl - Create/update a mirror of the idgames repository.
+idgames_sync.pl - Synchronize a copy of the C<idgames> archive.
 
 =head1 VERSION
 
@@ -23,7 +23,7 @@ our $our_name = basename $0;
 
 =head1 SYNOPSIS
 
-Create or update a mirror of the C<idgames> archive on the local host.
+Create or update a copy of the C<idgames> archive on the local host.
 
 =cut
 
@@ -66,7 +66,7 @@ our @options = (
     q(examples|x),
     q(morehelp|m),
     # script options
-    q(dry-run|n), # don't mirror, just show steps that would be performed
+    q(dry-run|n), # don't sync, just show steps that would be performed
     q(exclude|e=s@), # URLs to exclude when pulling from mirrors
     q(format|f=s), # reporting format
     q(path|p=s), # output path
@@ -89,7 +89,7 @@ our @options = (
 
 =head1 OPTIONS
 
- perl idgames_mirror.pl [options]
+ perl idgames_sync.pl [options]
 
  Help/verbosity options:
  -h|--help          Displays script options and usage
@@ -99,9 +99,9 @@ our @options = (
  -m|--morehelp      Show extended help info (format/type specifiers)
 
  Script options:
- -n|--dry-run       Don't mirror content, explain script actions instead
+ -n|--dry-run       Don't sync content, explain script actions instead
  -e|--exclude       Don't use these mirror URL(s) for syncing
- -p|--path          Path to mirror the idgames archive to
+ -p|--path          Path to sync the idgames archive to
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
@@ -119,16 +119,17 @@ our @options = (
 
 =head1 DESCRIPTION
 
-Using a current C<ls-lR.gz> listing file downloaded from an C<idgames> mirror
-site, updates an existing copy of the C<idgames> mirror on the local host, or
-create a new copy of the mirror on the local host if a copy does not exist.
+Using a current C<ls-lR.gz> listing file synchronized from an C<idgames> archive
+mirror site, synchronizes an existing copy of the C<idgames> mirror on the
+local host, or creates a new copy of the mirror on the local host if a copy of
+the mirror does not already exist.
 
 Script normally exits with a 0 status code, or a non-zero status code if any
 errors were encountered.
 
 =head1 OBJECTS
 
-=head2 idGames::Mirror::Config
+=head2 idGames::Sync::Config
 
 Configure/manage script options using L<Getopt::Long>.
 
@@ -138,7 +139,7 @@ Configure/manage script options using L<Getopt::Long>.
 
 =cut
 
-package idGames::Mirror::Config;
+package idGames::Sync::Config;
 
 use strict;
 use warnings;
@@ -243,9 +244,9 @@ sub show_morehelp {
 print <<MOREHELP;
 
  By default, the script will query a random mirror for each file that needs to
- be downloaded unless the --url switch is used to specify a specific mirror.
+ be synchronized unless the --url switch is used to specify a specific mirror.
 
- Files located in the /incoming directory will not be mirrored by default
+ Files located in the /incoming directory will not be synchronized by default
  unless --incoming is used.  Most FTP sites won't let you download/retrieve
  files from /incoming due to file/directory permissions on the FTP server;
  it's basically useless to try to download files from that directory, it will
@@ -765,9 +766,9 @@ sub BUILD {
 
 =item needs_sync
 
-Tests to see if this file/directory object needs to be synchronized with the
-mirror.  Returns C<1> for true if the file/directory needs to be synchronized,
-and C<0> for false.
+Tests to see if this file/directory object needs to be synchronized using the
+file located in the C<idgames> archive.  Returns C<1> for true if the
+file/directory needs to be synchronized, and C<0> for false.
 
 =cut
 
@@ -794,7 +795,7 @@ sub needs_sync {
 =item sync
 
 Syncs a remote file or directory to the local system.  Local directories are
-created, local files are downloaded from the remote system.
+created, local files are synchronized from the remote system.
 
 =cut
 
@@ -908,8 +909,8 @@ sub append_notes {
 
 =head2 Archive::File
 
-A file downloaded/to be downloaded from the mirror.  This object inherits from
-the L<Role::FileDir::Attribs> role.  See that role for a complete list of
+A file synchronized/to be synchronized from the mirror.  This object inherits
+from the L<Role::FileDir::Attribs> role.  See that role for a complete list of
 inherited attributes and methods.
 
 =cut
@@ -925,9 +926,9 @@ with qw(Role::FileDir::Attribs);
 
 =head2 Archive::Directory
 
-A directory downloaded/to be downloaded from the mirror.  This object inherits
-from the L<Role::FileDir::Attribs> and L<Role::Dir::Attribs> roles.  See those
-roles for a complete list of inherited attributes and methods.
+A directory synchronized/to be synchronized from the mirror.  This object
+inherits from the L<Role::FileDir::Attribs> and L<Role::Dir::Attribs> roles.
+See those roles for a complete list of inherited attributes and methods.
 
 =cut
 
@@ -1537,7 +1538,7 @@ root", i.e.  given a URL of C<http://example.com>, your C<$filename> should be
 something like C<path/to/file>, so that the full URL would become
 C<http://example.com/path/to/file>.
 
-The downloaded file is saved with a temporary name in the directory that was
+The synchronized file is saved with a temporary name in the directory that was
 passed in as C<tempdir> when the object was created (or the default
 L<File::Temp> directory if no C<tempdir> was used), and this temporary name is
 returned if the download was successful (HTTP 200).  If any errors were
@@ -1584,7 +1585,7 @@ sub fetch {
     my $fh = File::Temp->new( %temp_args );
     $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename );
 
-    # for formatting downloaded file sizes
+    # for formatting synchronized file sizes
     my $nf = Number::Format->new();
 
     # grab the file
@@ -1621,7 +1622,7 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print q(- Download successful; downloaded )
+        print q(- Download successful; synchronized )
             . $nf->format_bytes($size)
             . qq| byte(s)\n|;
         return $fh->filename;
@@ -1857,7 +1858,7 @@ errors were encountered.
 
     # force writes in output to STDOUT
     $| = 1;
-    my $cfg = idGames::Mirror::Config->new();
+    my $cfg = idGames::Sync::Config->new();
 
     if ( defined $cfg->get(q(help)) ) {
         pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
@@ -2046,14 +2047,14 @@ errors were encountered.
         }
         # close the local file filehandle
         $in_fh->close();
-        # get the digest for the downloaded file
+        # get the digest for the synchronized file
         my $dl_fh = IO::File->new(qq(< $dl_file));
         # $md5 has already been reset with the call to hexdigest() above
         $md5->addfile($dl_fh);
         my $content_digest = $md5->hexdigest();
         # close the filehandle
         $dl_fh->close();
-        # check to see if the downloaded ls-laR.gz file is the same file
+        # check to see if the synchronized ls-laR.gz file is the same file
         # on disk by comparing MD5 checksums for the buffer and file
         if ( $file_digest ne $content_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
@@ -2070,7 +2071,7 @@ errors were encountered.
         }
         # exit here if --update-ls-lar was used
         if ( $cfg->defined(q(update-ls-lar)) ) {
-            print qq(- ls-laR.gz downloaded, exiting program\n);
+            print qq(- ls-laR.gz synchronized, exiting program\n);
             exit 0;
         }
     }
@@ -2236,7 +2237,7 @@ Brian Manning, C<< <brian at xaoc dot org> >>
 =head1 BUGS
 
 Please report any bugs or feature requests to
-L<https://github.com/spicyjack/App-idGamesMirror/issues>.  I will be notified,
+L<https://github.com/spicyjack/App-idGamesSync/issues>.  I will be notified,
 and then you'll automatically be notified of progress on your bug as I make
 changes.
 
@@ -2244,19 +2245,19 @@ changes.
 
 You can find documentation for this module with the perldoc command.
 
-perldoc idgames_mirror.pl
+perldoc idgames_sync.pl
 
 You can also look for information at:
 
 =over 4
 
-=item * App::idGamesMirror GitHub project page
+=item * App::idGamesSync GitHub project page
 
-L<https://github.com/spicyjack/App-idGamesMirror>
+L<https://github.com/spicyjack/App-idGamesSync>
 
-=item * App::idGamesMirror GitHub issues page
+=item * App::idGamesSync GitHub issues page
 
-L<https://github.com/spicyjack/App-idGamesMirror/issues>
+L<https://github.com/spicyjack/App-idGamesSync/issues>
 
 =back
 
