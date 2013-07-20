@@ -3,11 +3,11 @@
 # Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>
 
 # For support with this file, please file an issue on the GitHub issue
-# tracker: https://github.com/spicyjack/App-idGamesMirror/issues
+# tracker: https://github.com/spicyjack/App-idGamesSync/issues
 
 =head1 NAME
 
-idgames_mirror.pl - Create/update a mirror of the idgames repository.
+idgames_sync.pl - Synchronize a copy of the C<idgames> archive.
 
 =head1 VERSION
 
@@ -23,7 +23,7 @@ our $our_name = basename $0;
 
 =head1 SYNOPSIS
 
-Create or update a mirror of the C<idgames> archive on the local host.
+Create or update a copy of the C<idgames> archive on the local host.
 
 =cut
 
@@ -66,7 +66,7 @@ our @options = (
     q(examples|x),
     q(morehelp|m),
     # script options
-    q(dry-run|n), # don't mirror, just show steps that would be performed
+    q(dry-run|n), # don't sync, just show steps that would be performed
     q(exclude|e=s@), # URLs to exclude when pulling from mirrors
     q(format|f=s), # reporting format
     q(path|p=s), # output path
@@ -89,7 +89,7 @@ our @options = (
 
 =head1 OPTIONS
 
- perl idgames_mirror.pl [options]
+ perl idgames_sync.pl [options]
 
  Help/verbosity options:
  -h|--help          Displays script options and usage
@@ -99,9 +99,9 @@ our @options = (
  -m|--morehelp      Show extended help info (format/type specifiers)
 
  Script options:
- -n|--dry-run       Don't mirror content, explain script actions instead
+ -n|--dry-run       Don't sync content, explain script actions instead
  -e|--exclude       Don't use these mirror URL(s) for syncing
- -p|--path          Path to mirror the idgames archive to
+ -p|--path          Path to sync the idgames archive to
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
@@ -119,16 +119,17 @@ our @options = (
 
 =head1 DESCRIPTION
 
-Using a current C<ls-lR.gz> listing file downloaded from an C<idgames> mirror
-site, updates an existing copy of the C<idgames> mirror on the local host, or
-create a new copy of the mirror on the local host if a copy does not exist.
+Using a current C<ls-lR.gz> listing file synchronized from an C<idgames> archive
+mirror site, synchronizes an existing copy of the C<idgames> mirror on the
+local host, or creates a new copy of the mirror on the local host if a copy of
+the mirror does not already exist.
 
 Script normally exits with a 0 status code, or a non-zero status code if any
 errors were encountered.
 
 =head1 OBJECTS
 
-=head2 idGames::Mirror::Config
+=head2 idGames::Sync::Config
 
 Configure/manage script options using L<Getopt::Long>.
 
@@ -138,7 +139,7 @@ Configure/manage script options using L<Getopt::Long>.
 
 =cut
 
-package idGames::Mirror::Config;
+package idGames::Sync::Config;
 
 use strict;
 use warnings;
@@ -243,9 +244,9 @@ sub show_morehelp {
 print <<MOREHELP;
 
  By default, the script will query a random mirror for each file that needs to
- be downloaded unless the --url switch is used to specify a specific mirror.
+ be synchronized unless the --url switch is used to specify a specific mirror.
 
- Files located in the /incoming directory will not be mirrored by default
+ Files located in the /incoming directory will not be synchronized by default
  unless --incoming is used.  Most FTP sites won't let you download/retrieve
  files from /incoming due to file/directory permissions on the FTP server;
  it's basically useless to try to download files from that directory, it will
@@ -554,6 +555,17 @@ has opts_path => (
     isa     => q(Str),
 );
 
+=item absolute_path
+
+The absolute path to this file or directory, from the filesystem root.
+
+=cut
+
+has absolute_path => (
+    is      => q(rw),
+    isa     => q(Str),
+);
+
 =item archive_obj
 
 The Archive object that his object is based off of.
@@ -688,13 +700,19 @@ sub BUILD {
     # the archive file object
     my $archive = $self->archive_obj;
 
-    $self->name($archive->name );
-    $self->parent($archive->parent);
+    # set up parent dir and short path
+    $self->name($archive->name);
+    my $parent_dir = $archive->parent;
+    # trim leading slash, it will be added back later
+    $parent_dir =~ s/^\///;
+    $self->parent($parent_dir);
     if ( length($self->parent) > 0 ) {
         $self->short_path($self->parent . q(/) . $self->name);
     } else {
-        $self->short_path(q(/) . $self->name);
+        $self->short_path($self->name);
     }
+
+    $self->absolute_path($self->opts_path . $self->short_path);
     $log->debug(qq(Creating stat object using local file/dir; ));
     $log->debug(q(Local file/dir: ) . $self->absolute_path);
     my $stat = stat( $self->absolute_path );
@@ -746,10 +764,38 @@ sub BUILD {
     }
 }
 
+=item needs_sync
+
+Tests to see if this file/directory object needs to be synchronized using the
+file located in the C<idgames> archive.  Returns C<1> for true if the
+file/directory needs to be synchronized, and C<0> for false.
+
+=cut
+
+sub needs_sync {
+    my $self = shift;
+
+    my $log = Log::Log4perl->get_logger();
+
+    if ( $self->short_status eq IS_MISSING ) {
+        $log->debug(q(File is missing from local system:));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 1;
+    } elsif ( $self->short_status eq DIFF_SIZE ) {
+        $log->debug(q(Local file different size than archive:));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 1;
+    } else {
+        $log->debug(q(File/dir does not need to be sync'ed));
+        $log->debug(q(-> ) . $self->absolute_path);
+        return 0;
+    }
+}
+
 =item sync
 
 Syncs a remote file or directory to the local system.  Local directories are
-created, local files are downloaded from the remote system.
+created, local files are synchronized from the remote system.
 
 =cut
 
@@ -801,34 +847,6 @@ sub sync {
         }
     }
     return 0;
-}
-
-=item needs_sync
-
-Tests to see if this file/directory object needs to be synchronized with the
-mirror.  Returns C<1> for true if the file/directory needs to be synchronized,
-and C<0> for false.
-
-=cut
-
-sub needs_sync {
-    my $self = shift;
-
-    my $log = Log::Log4perl->get_logger();
-
-    if ( $self->short_status eq IS_MISSING ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: File is missing from local system));
-        return 1;
-    } elsif ( $self->short_status eq DIFF_SIZE ) {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: Local file different size than archive));
-        return 1;
-    } else {
-        $log->debug(q(needs_sync: ) . $self->absolute_path);
-        $log->debug(q(needs_sync: File/dir does not need to be sync'ed));
-        return 0;
-    }
 }
 
 =item exists
@@ -887,25 +905,12 @@ sub append_notes {
     }
 }
 
-=item absolute_path
-
-The absolute path to a file on the local filesystem.  This path is generated
-using the contents of the C<--path> command line switch, and the contents of
-the C<short_path()> attribute.
-
-=cut
-
-sub absolute_path {
-    my $self = shift;
-    return $self->opts_path . $self->short_path;
-}
-
 =back
 
 =head2 Archive::File
 
-A file downloaded/to be downloaded from the mirror.  This object inherits from
-the L<Role::FileDir::Attribs> role.  See that role for a complete list of
+A file synchronized/to be synchronized from the mirror.  This object inherits
+from the L<Role::FileDir::Attribs> role.  See that role for a complete list of
 inherited attributes and methods.
 
 =cut
@@ -921,9 +926,9 @@ with qw(Role::FileDir::Attribs);
 
 =head2 Archive::Directory
 
-A directory downloaded/to be downloaded from the mirror.  This object inherits
-from the L<Role::FileDir::Attribs> and L<Role::Dir::Attribs> roles.  See those
-roles for a complete list of inherited attributes and methods.
+A directory synchronized/to be synchronized from the mirror.  This object
+inherits from the L<Role::FileDir::Attribs> and L<Role::Dir::Attribs> roles.
+See those roles for a complete list of inherited attributes and methods.
 
 =cut
 
@@ -1168,7 +1173,7 @@ sub write_record {
     # - file is different sizes between local and archive, and 'size' is set
     # - file is the same size between local and archive, and 'same' is set
     # - 'all' is set
-    # headers:local:archive:size:same
+    # report types: headers:local:archive:size:same
     # missing files
     my $checkname = $a->name;
     my $grepcheck = scalar(grep(/$checkname/, @_dotfiles));
@@ -1344,6 +1349,7 @@ package LWP::Wrapper;
 use File::Temp;
 use LWP::UserAgent;
 use Mouse;
+use Number::Format;
 
 use constant {
     LOGNAME     => __PACKAGE__,
@@ -1532,7 +1538,7 @@ root", i.e.  given a URL of C<http://example.com>, your C<$filename> should be
 something like C<path/to/file>, so that the full URL would become
 C<http://example.com/path/to/file>.
 
-The downloaded file is saved with a temporary name in the directory that was
+The synchronized file is saved with a temporary name in the directory that was
 passed in as C<tempdir> when the object was created (or the default
 L<File::Temp> directory if no C<tempdir> was used), and this temporary name is
 returned if the download was successful (HTTP 200).  If any errors were
@@ -1579,6 +1585,9 @@ sub fetch {
     my $fh = File::Temp->new( %temp_args );
     $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename );
 
+    # for formatting synchronized file sizes
+    my $nf = Number::Format->new();
+
     # grab the file
     $log->debug(LOGNAME . qq(: Fetching file: )
         . $base_url . $filename . qq(\n));
@@ -1613,7 +1622,9 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print qq|- Download successful; downloaded $size byte(s)\n|;
+        print q(- Download successful; synchronized )
+            . $nf->format_bytes($size)
+            . qq| byte(s)\n|;
         return $fh->filename;
     }
 }
@@ -1639,13 +1650,13 @@ Among other things, this object will help keep track of:
 
 =item Total script execution time
 
-=item Total files listed in archive
+=item Total files found in archive
 
 =item Total size of files listed in archive
 
-=item Total files retrieved (synchronized) from archive
+=item Total files (to be) retrieved/synchronized from archive
 
-=item Total bytes retrieved (synchronized) from archive
+=item Total bytes (to be) retrieved/synchronized from archive
 
 =back
 
@@ -1777,7 +1788,7 @@ sub write_stats {
     }
     my $nf = Number::Format->new();
     my $output;
-    $output = qq(- Total files listed in archive: )
+    $output = qq(- Total files found in archive: )
         . $args{total_archive_files} . qq(\n);
     $output .= qq(- Total size of files in archive: )
         . $nf->format_bytes($args{total_archive_size}) . qq(\n);
@@ -1820,7 +1831,7 @@ use Mouse; # sets strict and warnings
 
 
 use constant {
-    DEBUG_LOOPS => 20000,
+    DEBUG_LOOPS => 100,
     PERMS       => 0,
     HARDLINKS   => 1,
     OWNER       => 2,
@@ -1847,7 +1858,7 @@ errors were encountered.
 
     # force writes in output to STDOUT
     $| = 1;
-    my $cfg = idGames::Mirror::Config->new();
+    my $cfg = idGames::Sync::Config->new();
 
     if ( defined $cfg->get(q(help)) ) {
         pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
@@ -1867,14 +1878,16 @@ errors were encountered.
     #} else {
     #    $incoming_dir_flag = 0;
     #}
+
+
     # default log level
     my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
-    if ( $cfg->defined(q(debug)) && ! $cfg->defined(q(verbose)) ) {
-        $log4perl_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
-    } elsif ( $cfg->defined(q(verbose)) && ! $cfg->defined(q(debug)) ) {
-        $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
-    } elsif ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
+    if ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
         die(q(Script called with --debug and --verbose; choose one!));
+    } elsif ( $cfg->defined(q(debug)) ) {
+        $log4perl_conf = qq(log4perl.rootLogger = DEBUG, Screen\n);
+    } elsif ( $cfg->defined(q(verbose)) ) {
+        $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     }
 
     # color log output
@@ -1890,7 +1903,7 @@ errors were encountered.
     $log4perl_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
-        . qq|= [%6r] %p{1} %L (%M{1}) %m%n\n|;
+        . qq|= [%6r] %p{1} %4L (%M{1}) %m%n\n|;
 
     Log::Log4perl->init(\$log4perl_conf);
     my $log = Log::Log4perl->get_logger();
@@ -2001,6 +2014,7 @@ errors were encountered.
         $log->logdie(qq(Can't read file $lslar_file));
     }
 
+    ### UPDATE LS-LAR.GZ
     if ( ! $cfg->defined(q(dry-run)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
@@ -2033,14 +2047,14 @@ errors were encountered.
         }
         # close the local file filehandle
         $in_fh->close();
-        # get the digest for the downloaded file
+        # get the digest for the synchronized file
         my $dl_fh = IO::File->new(qq(< $dl_file));
         # $md5 has already been reset with the call to hexdigest() above
         $md5->addfile($dl_fh);
         my $content_digest = $md5->hexdigest();
         # close the filehandle
         $dl_fh->close();
-        # check to see if the downloaded ls-laR.gz file is the same file
+        # check to see if the synchronized ls-laR.gz file is the same file
         # on disk by comparing MD5 checksums for the buffer and file
         if ( $file_digest ne $content_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
@@ -2057,7 +2071,7 @@ errors were encountered.
         }
         # exit here if --update-ls-lar was used
         if ( $cfg->defined(q(update-ls-lar)) ) {
-            print qq(- ls-laR.gz downloaded, exiting program\n);
+            print qq(- ls-laR.gz synchronized, exiting program\n);
             exit 0;
         }
     }
@@ -2075,7 +2089,7 @@ errors were encountered.
     # parse the ls-laR.gz file
     my $counter = 0;
     my $current_dir;
-    foreach my $line ( split(/\n/, $buffer) ) {
+    BUFFER: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
         $log->debug(qq(line: $line));
@@ -2122,6 +2136,7 @@ errors were encountered.
             );
             if ( $local_file->needs_sync() ) {
                 if ( $cfg->defined(q(dry-run)) ) {
+                    $log->debug(q(dry-run is set; parsing next line...));
                     push(@synced_files, $archive_file);
                 } else {
                     my $sync_status = $local_file->sync(
@@ -2176,12 +2191,16 @@ errors were encountered.
             $current_dir = $fields[PERMS];
             $current_dir =~ s/:$//;
             $current_dir =~ s/^\.//;
-            $log->debug(qq(Parsing subdirectory: $current_dir));
             if ( $current_dir =~ /^\/incoming.*/ ) {
+                $log->debug(qq(Parsing subdirectory: $current_dir));
                 $log->debug(q(/incoming directory; setting flag));
                 $incoming_dir_flag = 1;
             } else {
-                $log->debug(qq(Setting current directory to: $current_dir));
+                if ($current_dir =~ /^$/ ) {
+                    $log->debug(qq(Setting current directory to: <root>));
+                } else {
+                    $log->debug(qq(Setting current directory to: $current_dir));
+                }
                 $log->debug(q(Clearing /incoming directory flag));
                 $incoming_dir_flag = 0;
             }
@@ -2197,12 +2216,11 @@ errors were encountered.
             $log->warn(qq(Unknown line found in input data; >$line<));
         }
         $counter++;
-        #if ( $log->is_debug() ) {
-        #    if ( $counter == DEBUG_LOOPS ) {
-        #        $log->debug(DEBUG_LOOPS . q( loops reached; exiting));
-        #        exit 0;
-        #    }
-        #}
+        if ( $log->is_debug() ) {
+            if ( $counter == DEBUG_LOOPS ) {
+                last BUFFER;
+            }
+        }
     } # foreach my $line ( split(/\n/, $buffer) )
     $stats->stop_timer();
     $stats->write_stats(
@@ -2219,7 +2237,7 @@ Brian Manning, C<< <brian at xaoc dot org> >>
 =head1 BUGS
 
 Please report any bugs or feature requests to
-L<https://github.com/spicyjack/App-idGamesMirror/issues>.  I will be notified,
+L<https://github.com/spicyjack/App-idGamesSync/issues>.  I will be notified,
 and then you'll automatically be notified of progress on your bug as I make
 changes.
 
@@ -2227,19 +2245,19 @@ changes.
 
 You can find documentation for this module with the perldoc command.
 
-perldoc idgames_mirror.pl
+perldoc idgames_sync.pl
 
 You can also look for information at:
 
 =over 4
 
-=item * App::idGamesMirror GitHub project page
+=item * App::idGamesSync GitHub project page
 
-L<https://github.com/spicyjack/App-idGamesMirror>
+L<https://github.com/spicyjack/App-idGamesSync>
 
-=item * App::idGamesMirror GitHub issues page
+=item * App::idGamesSync GitHub issues page
 
-L<https://github.com/spicyjack/App-idGamesMirror/issues>
+L<https://github.com/spicyjack/App-idGamesSync/issues>
 
 =back
 

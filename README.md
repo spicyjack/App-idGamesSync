@@ -1,4 +1,4 @@
-App-idGamesMirror-Tools
+App-idGamesSync
 
 The README is used to introduce the module and provide instructions on
 how to install the module, any machine dependencies it may have (for
@@ -26,15 +26,15 @@ SUPPORT AND DOCUMENTATION
 After installing, you can find documentation for this module with the
 perldoc command.
 
-    perldoc idgames_mirror.pl
+    perldoc idgames_sync.pl
 
 You can also look for information at:
 
     GitHub project page
-        https://github.com/spicyjack/App-idGamesMirror-Tools
+        https://github.com/spicyjack/App-idGamesSync
 
     GitHub issues page
-        https://github.com/spicyjack/App-idGamesMirror-Tools/issues
+        https://github.com/spicyjack/App-idGamesSync/issues
 
 COPYRIGHT AND LICENCE
 

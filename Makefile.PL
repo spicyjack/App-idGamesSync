@@ -3,10 +3,10 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME                => 'App::idGamesMirror::Tools',
+    NAME                => 'App::idGamesЅync',
     AUTHOR              => 'Brian Manning <brian at xaoc dot org>',
-    VERSION_FROM        => 'lib/App/idGamesMirror/Tools.pm',
-    ABSTRACT_FROM       => 'lib/App/idGamesMirror/Tools.pm',
+    VERSION_FROM        => 'bin/idgames_sync.pl',
+    ABSTRACT_FROM       => 'bin/idgames_sync.pl',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
@@ -34,5 +34,5 @@ WriteMakefile(
         'constant'              => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
-    clean               => { FILES => 'App-idGamesMirror-Tools-*' },
+    clean               => { FILES => 'App-idGamesЅync' },
 );
