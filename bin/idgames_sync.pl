@@ -628,16 +628,16 @@ has short_status => (
     default => q(),
 );
 
-=item long_status
+=item needs_sync
 
-A longer description than C<short_status> above.
+A flag that is set when this file or directory needs to be synchronized.
 
 =cut
 
-has long_status => (
+has needs_sync => (
     is      => q(rw),
-    isa     => q(Str),
-    default => q(),
+    isa     => q(Bool),
+    default => q(0),
 );
 
 =item notes
@@ -658,11 +658,13 @@ has notes => (
 
 =over
 
-=item new (BUILD)
+=item new() (ΒUILD)
 
-Creates the object, and runs C<stat()> on the file/directory to see if it
-exists on the filesystem.  Sets some extra attributes (below) based on whether
-or not the file exists.
+Creates an object that has consumed the L<Role::LocalFileDir> role.  This
+object would be used to keep track of attributes of a local file or directory.
+Sets up different "shortcuts", or file/directory attributes that would be
+commonly used when interacting with this object (aboslute path, parent path,
+short name, etc.)
 
 Required arguments:
 
@@ -672,17 +674,10 @@ Required arguments:
 
 The path on the local filesystem to the C<idgames> archive directory.
 
-=item current_dir
+=item archive_obj
 
-The current directory in the archive.  As the archive file is parsed, a
-directory will be listed, then all of the files in that directory will be
-listed.  The script needs this directory so it knows where underneath the
-C<opts_path> to look for the file that this object is trying to describe.
-
-=item name
-
-The name of the file or directory from the archive to look for on the local
-filesystem.
+The C<archive> object, which is used to map paths in the archive to local
+system paths.
 
 =back
 
@@ -690,8 +685,8 @@ filesystem.
 
 sub BUILD {
     my $self = shift;
-
     my $log = Log::Log4perl->get_logger();
+
     $log->logdie(qq(missing 'opts_path' argument))
         unless ( defined $self->opts_path );
     $log->logdie(qq(missing 'archive_obj' argument))
@@ -706,16 +701,33 @@ sub BUILD {
     # trim leading slash, it will be added back later
     $parent_dir =~ s/^\///;
     $self->parent($parent_dir);
+    $log->debug(qq(Parent path is: ) . $self->parent);
     if ( length($self->parent) > 0 ) {
         $self->short_path($self->parent . q(/) . $self->name);
     } else {
         $self->short_path($self->name);
     }
+    $log->debug(qq(Short path is: ) . $self->short_path);
 
     $self->absolute_path($self->opts_path . $self->short_path);
+    $log->debug(qq(Absolute path is: ) . $self->absolute_path);
+}
+
+=item stat_local()
+
+Runs C<stat()> on the file/directory to see if it exists on the filesystem.
+Sets some extra attributes (below) based on whether or not the file exists.
+
+=cut
+
+sub stat_local {
+    my $self = shift;
+    my $log = Log::Log4perl->get_logger();
+
     $log->debug(qq(Creating stat object using local file/dir; ));
     $log->debug(q(Local file/dir: ) . $self->absolute_path);
     my $stat = stat( $self->absolute_path );
+    my $archive = $self->archive_obj;
 
     unless ( defined $stat ) {
         # file doesn't exist
@@ -723,6 +735,7 @@ sub BUILD {
         $self->short_type(IS_MISSING);
         $self->short_status(IS_MISSING);
         $self->long_status(q(Missing locally));
+        $self->needs_sync(1);
     } else {
         my $lsperms = File::Stat::Ls->new();
         $self->perms($lsperms->format_mode($stat->mode) );
@@ -750,6 +763,7 @@ sub BUILD {
                 $self->append_notes(qq(Size mismatch; )
                     . q(archive size: ) . $archive->size . q( )
                     . q(local size: ) . $self->size . qq(\n));
+                $self->needs_sync(1);
             }
         } elsif ( -d $stat ) {
             $self->short_type(IS_DIR);
@@ -761,34 +775,6 @@ sub BUILD {
             $self->short_status(IS_UNKNOWN);
             $log->debug($self->name . q( is an unknown file!));
         }
-    }
-}
-
-=item needs_sync
-
-Tests to see if this file/directory object needs to be synchronized using the
-file located in the C<idgames> archive.  Returns C<1> for true if the
-file/directory needs to be synchronized, and C<0> for false.
-
-=cut
-
-sub needs_sync {
-    my $self = shift;
-
-    my $log = Log::Log4perl->get_logger();
-
-    if ( $self->short_status eq IS_MISSING ) {
-        $log->debug(q(File is missing from local system:));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 1;
-    } elsif ( $self->short_status eq DIFF_SIZE ) {
-        $log->debug(q(Local file different size than archive:));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 1;
-    } else {
-        $log->debug(q(File/dir does not need to be sync'ed));
-        $log->debug(q(-> ) . $self->absolute_path);
-        return 0;
     }
 }
 
@@ -2127,14 +2113,15 @@ errors were encountered.
             );
             $total_archive_size += $archive_file->size;
             my $local_file = Local::File->new(
-                opts_path       => $cfg->get(q(path)),
-                archive_obj    => $archive_file,
+                opts_path   => $cfg->get(q(path)),
+                archive_obj => $archive_file,
             );
+            $local_file->stat_local();
             $report->write_record(
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
             );
-            if ( $local_file->needs_sync() ) {
+            if ( $local_file->needs_sync ) {
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
                     push(@synced_files, $archive_file);
@@ -2174,7 +2161,7 @@ errors were encountered.
                 archive_obj    => $archive_dir,
                 local_obj      => $local_dir,
             );
-            if ( $local_dir->needs_sync() ) {
+            if ( $local_dir->needs_sync ) {
                 if ( ! $cfg->defined(q(dry-run)) ) {
                     $local_dir->sync(
                         lwp             => $lwp,
@@ -2218,6 +2205,8 @@ errors were encountered.
         $counter++;
         if ( $log->is_debug() ) {
             if ( $counter == DEBUG_LOOPS ) {
+                $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS . q|) reached...|);
+                $log->debug(q(Exiting script early due to --debug flag));
                 last BUFFER;
             }
         }
