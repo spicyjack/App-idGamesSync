@@ -803,34 +803,27 @@ sub sync {
         }
     }
     my $lwp = $args{lwp};
-    if ( $log->is_debug() ) {
-        $log->debug(qq(Simulated download of a file;));
-        $log->debug(qq(Archive: ) . $lwp->get_base_url() . $self->short_path);
-        $log->debug(qq(Local:   ) . $self->absolute_path );
+    if ( ref($self) eq q(Local::File) ) {
+        my $temp_file = $lwp->fetch( filename => $self->short_path );
+        if ( defined $temp_file ) {
+            print qq(- Writing file: ) . $self->absolute_path . qq(\n);
+            move($temp_file, $self->absolute_path );
+        }
         return 1;
-    } else {
-        if ( ref($self) eq q(Local::File) ) {
-            my $temp_file = $lwp->fetch( filename => $self->short_path );
-            if ( defined $temp_file ) {
-                print qq(- Writing file: ) . $self->absolute_path . qq(\n);
-                move($temp_file, $self->absolute_path );
+    } elsif ( ref($self) eq q(Local::Directory) ) {
+        if ( -e $self->absolute_path ) {
+            $log->debug(qq(Directory ) . $self->absolute_path
+                . qq( already exists));
+        } else {
+            if ( ! mkdir($self->absolute_path, q(0755)) ) {
+                $log->warn(q(Failed to create directory )
+                    . $self->absolute_path);
+                $log->logdie(q(Error message: ) . $!);
             }
             return 1;
-        } elsif ( ref($self) eq q(Local::Directory) ) {
-            if ( -e $self->absolute_path ) {
-                $log->debug(qq(Directory ) . $self->absolute_path
-                    . qq( already exists));
-            } else {
-                if ( ! mkdir($self->absolute_path, q(0755)) ) {
-                    $log->warn(q(Failed to create directory )
-                        . $self->absolute_path);
-                    $log->logdie(q(Error message: ) . $!);
-                }
-                return 1;
-            }
-        } else {
-            $log->logdie(qq(Can't sync unknown object: ) . ref($self));
         }
+    } else {
+        $log->logdie(qq(Can't sync unknown object: ) . ref($self));
     }
     return 0;
 }
@@ -2097,9 +2090,9 @@ errors were encountered.
             $log->debug(qq(Reassembled filename: '$name_field'));
         }
         if ( $fields[PERMS] =~ /^-.*/ ) {
-            $total_archive_files++;
             # skip this file if it's inside the /incoming directory
             next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
+            $total_archive_files++;
             my $archive_file = Archive::File->new(
                 parent          => $current_dir,
                 perms           => $fields[PERMS],
