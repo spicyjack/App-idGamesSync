@@ -1421,13 +1421,11 @@ sub BUILD {
         # mirrors
         foreach my $mirror_test ( @idgames_mirrors ) {
             foreach my $exclude_test ( @exclude_mirrors ) {
-                $log->debug(LOGNAME
-                    . qq(: Checking $exclude_test against $mirror_test));
+                $log->debug(qq(: Checking $exclude_test against $mirror_test));
                 if ( $mirror_test =~ /$exclude_test/ ) {
-                    $log->debug(LOGNAME . qq(: Excluding mirror $mirror_test));
+                    $log->debug(qq(: Excluding mirror $mirror_test));
                 } else {
-                    $log->debug(LOGNAME
-                        . qq(: Adding $mirror_test to usable mirrors));
+                    $log->debug(qq(: Adding $mirror_test to usable mirrors));
                     push(@usable_mirrors, $mirror_test);
                 }
             }
@@ -1437,7 +1435,7 @@ sub BUILD {
     }
     if ( $log->is_debug () ) {
         foreach my $um ( @usable_mirrors ) {
-            $log->debug(LOGNAME . qq(: Usable mirror: $um));
+            $log->debug(qq(: Usable mirror: $um));
         }
     }
 }
@@ -1474,7 +1472,7 @@ sub get_base_url {
         $base_url = $self->base_url;
     }
 
-    $log->debug(LOGNAME . qq(: get_base_url; returning: $base_url));
+    $log->debug(qq(returning: $base_url));
     return $base_url;
 }
 
@@ -1552,14 +1550,13 @@ sub fetch {
 
     # create a tempfile for the download
     my $fh = File::Temp->new( %temp_args );
-    $log->debug(LOGNAME . qq(: Created temp file ) . $fh->filename );
+    $log->debug(qq(Created temp file ) . $fh->filename );
 
     # for formatting synchronized file sizes
     my $nf = Number::Format->new();
 
     # grab the file
-    $log->debug(LOGNAME . qq(: Fetching file: )
-        . $base_url . $filename . qq(\n));
+    $log->debug(qq(Fetching file: ) . $base_url . $filename . qq(\n));
     print qq(- Fetching file: ) . $base_url . $filename . qq(\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
