@@ -792,16 +792,7 @@ sub sync {
     my $log = Log::Log4perl->get_logger();
     $log->logdie(qq(missing 'lwp' argument))
         unless ( defined $args{lwp} );
-    $log->logdie(qq(missing 'sync_dotfiles' argument))
-        unless ( defined $args{sync_dotfiles} );
 
-    # exit if we're not printing dotfiles
-    if ( $self->is_dotfile() ) {
-        if ( $args{sync_dotfiles} == 0 ) {
-            $log->debug(qq(Skipping sync of a dotfile));
-            return 0;
-        }
-    }
     my $lwp = $args{lwp};
     if ( ref($self) eq q(Local::File) ) {
         my $temp_file = $lwp->fetch( filename => $self->short_path );
@@ -1155,7 +1146,6 @@ sub write_record {
     # report types: headers:local:archive:size:same
     # missing files
     my $checkname = $a->name;
-    my $grepcheck = scalar(grep(/$checkname/, @_dotfiles));
     if ( $l->short_status eq IS_MISSING ) {
         if ( $self->report_types =~ /local/ ) { $write_flag = 1; }
     }
@@ -2115,14 +2105,14 @@ errors were encountered.
                 local_obj      => $local_file,
             );
             if ( $local_file->needs_sync ) {
+                # skip dotfiles unless --dotfiles was used
+                next if ( $local_file->is_dotfile
+                    && ! $cfg->defined(q(dotfiles)) );
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
                     push(@synced_files, $archive_file);
                 } else {
-                    my $sync_status = $local_file->sync(
-                            lwp             => $lwp,
-                            sync_dotfiles   => $cfg->get(q(dotfiles))
-                    );
+                    my $sync_status = $local_file->sync( lwp => $lwp );
                     if ( $sync_status ) {
                         # add the file to the list of synced files
                         # used later on in reporting
@@ -2156,10 +2146,7 @@ errors were encountered.
             );
             if ( $local_dir->needs_sync ) {
                 if ( ! $cfg->defined(q(dry-run)) ) {
-                    $local_dir->sync(
-                        lwp             => $lwp,
-                        sync_dotfiles   => $cfg->get(q(dotfiles)),
-                    );
+                    $local_dir->sync( lwp => $lwp );
                 }
             }
         # A new directory entry
