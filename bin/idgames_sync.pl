@@ -2012,9 +2012,9 @@ errors were encountered.
         # check to see if the synchronized ls-laR.gz file is the same file
         # on disk by comparing MD5 checksums for the buffer and file
         print q(- Local file size:   ) . $lslar_stat->size
-            . qq( checksum: $local_digest\n);
+            . qq(;  checksum: $local_digest\n);
         print q(- Archive file size: ) . $dl_lslar_stat->size
-            . qq( checksum: $archive_digest\n);
+            . qq(;  checksum: $archive_digest\n);
         if ( $local_digest ne $archive_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
             print qq(- ls-laR.gz Checksum mismatch...\n);
@@ -2022,7 +2022,7 @@ errors were encountered.
             print qq(- With file: $dl_lslar_file\n);
             move($dl_lslar_file, $lslar_file);
         } else {
-            print qq(- $lslar_file and mirror copy match!\n);
+            print qq(- $lslar_file and archive copy match!\n);
             $log->debug(qq(Unlinking $dl_lslar_file));
             unlink $dl_lslar_file;
         }
