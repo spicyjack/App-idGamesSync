@@ -145,6 +145,11 @@ use strict;
 use warnings;
 use Pod::Usage; # prints POD docs when --help is called
 
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
+
 sub new {
     my $class = shift;
 
@@ -175,6 +180,11 @@ sub new {
     if ( $self->get(q(morehelp)) ) {
         $self->show_morehelp();
         exit 0;
+    }
+
+    if ( exists $args{debug} ) {
+        warn qq(Dumping %args hash:\n);
+        warn Dumper $self->{_args};
     }
 
     # return this object to the caller
@@ -353,8 +363,11 @@ sub defined {
     # turn the args reference back into a hash with a copy
     my %args = %{$self->{_args}};
 
+    # Can't use Log4perl here, since it hasn't been set up yet
     if ( exists $args{$key} ) {
+        #warn qq(exists: $key\n);
         if ( defined $args{$key} ) {
+            #warn qq(defined: $key; ) . $args{$key} . qq(\n);
             return 1;
         }
     }
@@ -528,6 +541,11 @@ use Date::Format;
 use File::Copy;
 use File::stat; # OO wrapper around stat()
 use File::Stat::Ls; # conversion tools for the file/dir modes
+
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
 
 use constant {
     IS_DIR      => q(D),
@@ -730,7 +748,7 @@ sub stat_local {
 
     unless ( defined $stat ) {
         # file doesn't exist
-        $log->debug($archive->name . q( is not on the local system!));
+        $log->debug($archive->name . q( is not on the local system));
         $self->short_type(IS_MISSING);
         $self->short_status(IS_MISSING);
         $self->long_status(q(Missing locally));
@@ -749,8 +767,10 @@ sub stat_local {
         $mtime =~ s/\s{2,}/ /;
         $self->mod_time($mtime);
 
+        # this only works in 5.12.1 or newer
+        #if ( -f $stat ) {
         # file does exist; what kind of file is it?
-        if ( -f $stat ) {
+        if ( -f $self->absolute_path ) {
             $self->short_type(IS_FILE);
             $self->short_status(IS_FILE);
             $log->debug($archive->name . q( is a file!));
@@ -764,7 +784,9 @@ sub stat_local {
                     . q(local size: ) . $self->size . qq(\n));
                 $self->needs_sync(1);
             }
-        } elsif ( -d $stat ) {
+        # this only works in 5.12.1 or newer
+        #} elsif ( -d $stat ) {
+        } elsif ( -d $self->absolute_path ) {
             $self->short_type(IS_DIR);
             $self->short_status(IS_DIR);
             $log->debug($self->name . q( is a directory!));
@@ -1428,7 +1450,7 @@ sub BUILD {
     }
     if ( $log->is_debug () ) {
         foreach my $um ( @usable_mirrors ) {
-            $log->debug(qq(: Usable mirror: $um));
+            $log->debug(qq(Usable mirror: $um));
         }
     }
 }
@@ -2046,7 +2068,7 @@ errors were encountered.
     # parse the ls-laR.gz file
     my $counter = 0;
     my $current_dir;
-    BUFFER: foreach my $line ( split(/\n/, $buffer) ) {
+    IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
         $log->debug(qq(line: $line));
@@ -2094,8 +2116,10 @@ errors were encountered.
             );
             if ( $local_file->needs_sync ) {
                 # skip dotfiles unless --dotfiles was used
-                next if ( $local_file->is_dotfile
-                    && ! $cfg->defined(q(dotfiles)) );
+                if ($local_file->is_dotfile && ! $cfg->get(q(dotfiles))) {
+                    $log->debug(q(dotfile needs sync, but --dotfiles not used));
+                    next IDGAMES_LINE;
+                }
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
                     push(@synced_files, $archive_file);
@@ -2175,7 +2199,7 @@ errors were encountered.
             if ( $counter == DEBUG_LOOPS ) {
                 $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS . q|) reached...|);
                 $log->debug(q(Exiting script early due to --debug flag));
-                last BUFFER;
+                last IDGAMES_LINE;
             }
         }
     } # foreach my $line ( split(/\n/, $buffer) )
