@@ -1788,7 +1788,6 @@ use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use LWP::UserAgent;
 use Mouse; # sets strict and warnings
 
-
 use constant {
     DEBUG_LOOPS => 100,
     PERMS       => 0,
@@ -1832,12 +1831,6 @@ errors were encountered.
     my $parent = q();
     # flag set whenever we're parsing files in/beneath the /incoming directory
     my $incoming_dir_flag = 0;
-    #if ( defined $cfg->get(q(incoming)} ) {
-    #    $incoming_dir_flag = 1;
-    #} else {
-    #    $incoming_dir_flag = 0;
-    #}
-
 
     # default log level
     my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
