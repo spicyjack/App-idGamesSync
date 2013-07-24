@@ -1786,7 +1786,8 @@ sub write_stats {
     }
     $output .= $nf->format_bytes($total_synced_bytes) . qq(\n);
     $output .= qq(- Total script execution time: )
-        . tv_interval ( $start_time, $stop_time ) . qq( seconds\n);
+        . sprintf('%0.2f', tv_interval ( $start_time, $stop_time ) )
+        . qq( seconds\n);
     print $output;
 }
 
