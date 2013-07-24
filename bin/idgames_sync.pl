@@ -1781,6 +1781,7 @@ package main;
 use Date::Format; # strftime
 use Digest::MD5; # comparing the ls-laR.gz files
 use File::Copy;
+use File::stat;
 use Getopt::Long;
 use IO::File;
 use IO::Uncompress::Gunzip qw($GunzipError);
@@ -1805,7 +1806,6 @@ use constant {
 ### script variables
 my $report_types = q(headers:local:archive:size:same);
 my $report_format = q(more);
-
 
 =head1 DESCRIPTION
 
@@ -1960,8 +1960,9 @@ errors were encountered.
     my @synced_files;
     my $total_archive_files = 0;
     my $total_archive_size = 0;
-    my $dl_file;
+    my $dl_lslar_file;
     my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
+    my $lslar_stat = stat($lslar_file);
     $log->debug(qq(Set lslar_file to $lslar_file));
     if ( ! -r $lslar_file ) {
         $log->logdie(qq(Can't read file $lslar_file));
@@ -1976,51 +1977,54 @@ errors were encountered.
             $lslar_url = $cfg->get(q(url));
         }
         # returns undef if there was a problem fetching the file
-        $dl_file = $lwp->fetch(
+        $dl_lslar_file = $lwp->fetch(
             filename => q(ls-laR.gz),
             base_url => $lslar_url,
         );
-        if ( ! defined $dl_file ) {
+        my $dl_lslar_stat = stat($dl_lslar_file);
+        if ( ! defined $dl_lslar_file ) {
             $log->logdie(qq(Could not download ls-laR.gz file));
         }
 
         my $in_fh = IO::File->new(qq(< $lslar_file));
-        my $file_digest;
+        my $local_digest;
         # create the digest object outside of any nested blocks
         my $md5 = Digest::MD5->new();
         # get the digest for the local file, if the local file exists
         if ( defined $in_fh ) {
             $md5->addfile($in_fh);
             # note this resets the digest contained in $md5
-            $file_digest = $md5->hexdigest();
+            $local_digest = $md5->hexdigest();
         } else {
             # if there's no previous copy of the archive on disk, just use
             # a bogus string for the checksum
-            $file_digest = q(bogus file digest);
+            $local_digest = q(bogus file digest);
         }
         # close the local file filehandle
         $in_fh->close();
         # get the digest for the synchronized file
-        my $dl_fh = IO::File->new(qq(< $dl_file));
+        my $dl_fh = IO::File->new(qq(< $dl_lslar_file));
         # $md5 has already been reset with the call to hexdigest() above
         $md5->addfile($dl_fh);
-        my $content_digest = $md5->hexdigest();
+        my $archive_digest = $md5->hexdigest();
         # close the filehandle
         $dl_fh->close();
         # check to see if the synchronized ls-laR.gz file is the same file
         # on disk by comparing MD5 checksums for the buffer and file
-        if ( $file_digest ne $content_digest ) {
+        print q(- Local file size:   ) . $lslar_stat->size
+            . qq( checksum: $local_digest\n);
+        print q(- Archive file size: ) . $dl_lslar_stat->size
+            . qq( checksum: $archive_digest\n);
+        if ( $local_digest ne $archive_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
             print qq(- ls-laR.gz Checksum mismatch...\n);
-            print qq(- Local copy: $file_digest\n);
-            print qq(- Archive copy: $content_digest\n);
             print qq(- Replacing file: $lslar_file\n);
-            print qq(- With file: $dl_file\n);
-            move($dl_file, $lslar_file);
+            print qq(- With file: $dl_lslar_file\n);
+            move($dl_lslar_file, $lslar_file);
         } else {
             print qq(- $lslar_file and mirror copy match!\n);
-            $log->debug(qq(Unlinking $dl_file));
-            unlink $dl_file;
+            $log->debug(qq(Unlinking $dl_lslar_file));
+            unlink $dl_lslar_file;
         }
         # exit here if --update-ls-lar was used
         if ( $cfg->defined(q(update-ls-lar)) ) {
