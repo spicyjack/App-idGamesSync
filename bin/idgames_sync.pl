@@ -1866,7 +1866,8 @@ errors were encountered.
 
     Log::Log4perl->init(\$log4perl_conf);
     my $log = Log::Log4perl->get_logger();
-    $log->debug(__FILE__ . qq(: script start; ) . time2str(q(%C), time));
+    $log->debug(q(##### ) . __FILE__ . qq( #####));
+    $log->debug(qq(script start; ) . time2str(q(%C), time));
 
     my @exclude_urls;
     if ( $cfg->defined(q(exclude)) ) {
