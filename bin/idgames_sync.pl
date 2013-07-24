@@ -535,7 +535,6 @@ use constant {
     IS_UNKNOWN  => q(?),
     IS_MISSING  => q(!),
     DIFF_SIZE   => q(S),
-    LOGNAME     => __PACKAGE__,
 };
 
 my @_dotfiles = qw( .message .DS_Store .mirror_log .listing );
@@ -994,7 +993,6 @@ use constant {
     IS_UNKNOWN  => q(?),
     IS_MISSING  => q(!),
     DIFF_SIZE   => q(S),
-    LOGNAME     => __PACKAGE__,
 };
 
 =head3 Attributes
@@ -1037,7 +1035,6 @@ use constant {
     IS_UNKNOWN  => q(?),
     IS_MISSING  => q(!),
     DIFF_SIZE   => q(S),
-    LOGNAME     => __PACKAGE__,
 };
 
 with qw(Role::Reports);
@@ -1319,10 +1316,6 @@ use File::Temp;
 use LWP::UserAgent;
 use Mouse;
 use Number::Format;
-
-use constant {
-    LOGNAME     => __PACKAGE__,
-};
 
 my @usable_mirrors;
 # used for /newstuff
