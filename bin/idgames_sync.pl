@@ -1897,9 +1897,8 @@ errors were encountered.
         if ( defined $ENV{TEMP} ) {
             # FIXME need to set taint mode, and untaint the environment
             # variables used below
-            $cfg->set(q(tempdir)) = $ENV{TEMP};
-            $log->debug(__FILE__ . q(: setting tempdir to )
-                . $cfg->get(q(tempdir)));
+            $cfg->set(q(tempdir), $ENV{TEMP});
+            $log->debug(q(setting tempdir to ) . $cfg->get(q(tempdir)));
         } elsif ( defined $ENV{TMP} ) {
             $cfg->set(q(tempdir), $ENV{TMP});
         } elsif ( defined $ENV{TMPDIR} ) {
