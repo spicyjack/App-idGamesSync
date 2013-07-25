@@ -81,7 +81,7 @@ our @options = (
     q(dotfiles), # don't show dotfiles in reports - .filename
     q(headers), # show directory headers and blocks used
     q(tempdir=s), # temporary directory to use for tempfiles
-    q(update-ls-lar), # update the ls-laR.gz file, then exit
+    q(update-ls-lar|update-lslar), # update the ls-laR.gz file, then exit
     # combination options
     q(size-local|local-size|sl), # show size mismatches, missing local files
     q(size-same|ss), # show size mismatches and missing local files
