@@ -1603,8 +1603,7 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
-        print q(- Download successful; synchronized )
-            . $nf->format_bytes($size)
+        print q(- Download successful, downloaded) . $nf->format_bytes($size)
             . qq| byte(s)\n|;
         return $fh->filename;
     }
