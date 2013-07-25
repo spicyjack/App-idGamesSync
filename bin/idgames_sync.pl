@@ -62,6 +62,7 @@ our @options = (
     # help/verbosity options
     q(help|h),
     q(debug|D|d),
+    q(debug-files=i), # how many lines to parse/compare from ls-laR.gz
     q(verbose|v),
     q(examples|x),
     q(morehelp|m),
@@ -2090,8 +2091,7 @@ errors were encountered.
             $log->debug(qq(Reassembled filename: '$name_field'));
         }
         if ( $fields[PERMS] =~ /^-.*/ ) {
-            # skip this file if it's inside the /incoming directory
-            next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
+
             $total_archive_files++;
             my $archive_file = Archive::File->new(
                 parent          => $current_dir,
@@ -2115,6 +2115,11 @@ errors were encountered.
                 local_obj      => $local_file,
             );
             if ( $local_file->needs_sync ) {
+                # skip this file if it's inside the /incoming directory
+                if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) ) {
+                    $log->debug(q(file in /incoming, but --incoming not used));
+                    next IDGAMES_LINE;
+                }
                 # skip dotfiles unless --dotfiles was used
                 if ($local_file->is_dotfile && ! $cfg->get(q(dotfiles))) {
                     $log->debug(q(dotfile needs sync, but --dotfiles not used));
@@ -2196,10 +2201,20 @@ errors were encountered.
         }
         $counter++;
         if ( $log->is_debug() ) {
-            if ( $counter == DEBUG_LOOPS ) {
-                $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS . q|) reached...|);
-                $log->debug(q(Exiting script early due to --debug flag));
-                last IDGAMES_LINE;
+            if ( $cfg->defined(q(debug-files)) ) {
+                if ( $counter > $cfg->get(q(debug-files)) ) {
+                    $log->debug(q|reached | . $cfg->get(q(debug-files))
+                        . q( files));
+                    $log->debug(q(Exiting script early due to --debug flag));
+                    last IDGAMES_LINE;
+                }
+            } else {
+                if ( $counter == DEBUG_LOOPS ) {
+                    $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS
+                        . q|) reached...|);
+                    $log->debug(q(Exiting script early due to --debug flag));
+                    last IDGAMES_LINE;
+                }
             }
         }
     } # foreach my $line ( split(/\n/, $buffer) )
