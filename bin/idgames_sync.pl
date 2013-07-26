@@ -78,6 +78,7 @@ our @options = (
     q(loglevel|log|level|ll=s),
     # misc options
     q(show-mirrors), # show the mirrors array and exit
+    q(create-mirror), # create a new mirror if ls-laR.gz not found at --path
     q(incoming), # show files in the /incoming directory
     q(dotfiles), # don't show dotfiles in reports - .filename
     q(headers), # show directory headers and blocks used
@@ -2012,8 +2013,13 @@ errors were encountered.
     my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
     my $lslar_stat = stat($lslar_file);
     $log->debug(qq(Set lslar_file to $lslar_file));
-    if ( ! -r $lslar_file ) {
-        $log->logdie(qq(Can't read file $lslar_file));
+    if ( ! -r $lslar_file && ! $cfg->defined(q(create-mirror)) ) {
+        $log->fatal(qq(Can't read/find the 'ls-laR.gz' file!));
+        $log->fatal(qq|(Checked: $lslar_file)|);
+        $log->fatal(qq(If you are creating a new mirror, please use the));
+        $log->fatal(qq('--create-mirror' switch; otherwise, check that));
+        $log->fatal(qq(the '--path' switch is pointing to the correct path.));
+        $log->logdie(qq(Exiting script...));
     }
 
     ### UPDATE LS-LAR.GZ
