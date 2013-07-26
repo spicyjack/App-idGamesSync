@@ -2046,15 +2046,14 @@ errors were encountered.
         # get the digest for the local file, if the local file exists
         if ( defined $in_fh ) {
             $md5->addfile($in_fh);
-            # note this resets the digest contained in $md5
-            $local_digest = $md5->hexdigest();
             # close the local file filehandle
             $in_fh->close();
         } else {
             # if there's no previous copy of the archive on disk, just use
             # a bogus file for the stat object, and bogus string for the
-            # checksum
-            # FIXME this is *NIX-specific
+            # checksum;
+            # no need to close the filehandle, it will already be 'undef'
+            # FIXME *NIX-specific path
             $lslar_stat = stat(q(/dev/null));
             $md5->add(q(bogus file digest));
         }
