@@ -146,10 +146,6 @@ use strict;
 use warnings;
 use Pod::Usage; # prints POD docs when --help is called
 
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
-$Data::Dumper::Sortkeys = 1;
-$Data::Dumper::Terse = 1;
 
 sub new {
     my $class = shift;
@@ -183,10 +179,6 @@ sub new {
         exit 0;
     }
 
-    if ( exists $args{debug} ) {
-        warn qq(Dumping %args hash:\n);
-        warn Dumper $self->{_args};
-    }
 
     # return this object to the caller
     return $self;
@@ -1813,6 +1805,11 @@ use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use LWP::UserAgent;
 use Mouse; # sets strict and warnings
 
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
+
 use constant {
     DEBUG_LOOPS => 100,
     PERMS       => 0,
@@ -1921,8 +1918,8 @@ errors were encountered.
             $cfg->set(q(tempdir), $ENV{TMP});
             $log->debug(q(Using ENV{TMP} for tempdir));
         } elsif ( defined $ENV{TMPDIR} ) {
-            $cfg->set(q(tempdir), $ENV{TMPDIR})
-            $log->debug(q(Using ENV{TMP} for tempdir));
+            $cfg->set(q(tempdir), $ENV{TMPDIR});
+            $log->debug(q(Using ENV{TMPDIR} for tempdir));
         } else {
             $cfg->set(q(tempdir), q(/tmp));
             $log->debug(q(Using '/tmp' for tempdir));
@@ -1941,6 +1938,12 @@ errors were encountered.
             print qq(- $mirror\n);
         }
         exit 0;
+    }
+
+    if ( $log->is_debug ) {
+        $log->debug(q(Dumping %args hash:));
+        my %args = $cfg->get_args();
+        warn(Dumper {%args});
     }
 
     $log->logdie(q(Must specify path directory with --path))
