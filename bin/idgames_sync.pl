@@ -1916,14 +1916,18 @@ errors were encountered.
             # FIXME need to set taint mode, and untaint the environment
             # variables used below
             $cfg->set(q(tempdir), $ENV{TEMP});
-            $log->debug(q(setting tempdir to ) . $cfg->get(q(tempdir)));
+            $log->debug(q(Using ENV{TEMP} for tempdir));
         } elsif ( defined $ENV{TMP} ) {
             $cfg->set(q(tempdir), $ENV{TMP});
+            $log->debug(q(Using ENV{TMP} for tempdir));
         } elsif ( defined $ENV{TMPDIR} ) {
             $cfg->set(q(tempdir), $ENV{TMPDIR})
+            $log->debug(q(Using ENV{TMP} for tempdir));
         } else {
             $cfg->set(q(tempdir), q(/tmp));
+            $log->debug(q(Using '/tmp' for tempdir));
         }
+        $log->debug(q(setting tempdir to: ) . $cfg->get(q(tempdir)));
     }
     my $lwp = LWP::Wrapper->new(
         base_url        => $cfg->get(q(url)),
