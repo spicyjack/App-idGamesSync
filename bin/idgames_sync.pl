@@ -74,7 +74,7 @@ our @options = (
     q(type|t=s@), # what type of information to report
     q(url|u=s), # URL to use for mirroring
     # logging options
-    q(colorize), # always colorize logs, no matter if a pipe is present or not
+    q(colorize!), # always colorize logs, no matter if a pipe is present or not
     q(loglevel|log|level|ll=s),
     # misc options
     q(show-mirrors), # show the mirrors array and exit
@@ -1803,6 +1803,7 @@ package main;
 ### external packages
 use Date::Format; # strftime
 use Digest::MD5; # comparing the ls-laR.gz files
+use English;
 use File::Copy;
 use File::stat;
 use Getopt::Long;
@@ -1865,8 +1866,25 @@ errors were encountered.
         $log4perl_conf = qq(log4perl.rootLogger = INFO, Screen\n);
     }
 
+    # if 'colorize' is undefined, set a default (needed for Log4perl check
+    # below)
+    if ( ! $cfg->defined(q(colorize)) ) {
+        # colorize if STDOUT is connected to a terminal
+        if ( -t STDOUT ) {
+            $cfg->set(q(colorize), 1);
+        } else {
+            $cfg->set(q(colorize), 0);
+        }
+        # Unless we're running on Windows, in which case, don't colorize
+        # unless --colorize is explicitly used, which would cause this whole
+        # block to get skipped
+        if ( $OSNAME eq q(MSWin32) ) {
+            $cfg->set(q(colorize), 0);
+        }
+    }
+
     # color log output
-    if ( -t STDOUT || $cfg->defined(q(colorize))) {
+    if ( $cfg->get(q(colorize)) ) {
         $log4perl_conf .= q(log4perl.appender.Screen )
             . qq(= Log::Log4perl::Appender::ScreenColoredLevels\n);
     } else {
@@ -1960,6 +1978,7 @@ errors were encountered.
         $report_format = $cfg->get(q(format));
     }
 
+    # skip syncing of dotfiles by default
     if ( ! $cfg->defined(q(dotfiles)) ) {
         $cfg->set(q(dotfiles), 0);
     }
@@ -2090,7 +2109,14 @@ errors were encountered.
             $log->debug(qq(Reassembled filename: '$name_field'));
         }
         if ( $fields[PERMS] =~ /^-.*/ ) {
-
+            # skip this file if it's inside the /incoming directory
+            # this can't be combined with the --dotfiles check below because
+            # that requires a local file object, whereas the incoming dir
+            # check works off of the archive directory
+            if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) ) {
+                $log->debug(q(file in /incoming, but --incoming not used));
+                next IDGAMES_LINE;
+            }
             $total_archive_files++;
             my $archive_file = Archive::File->new(
                 parent          => $current_dir,
@@ -2114,11 +2140,6 @@ errors were encountered.
                 local_obj      => $local_file,
             );
             if ( $local_file->needs_sync ) {
-                # skip this file if it's inside the /incoming directory
-                if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) ) {
-                    $log->debug(q(file in /incoming, but --incoming not used));
-                    next IDGAMES_LINE;
-                }
                 # skip dotfiles unless --dotfiles was used
                 if ($local_file->is_dotfile && ! $cfg->get(q(dotfiles))) {
                     $log->debug(q(dotfile needs sync, but --dotfiles not used));
@@ -2139,7 +2160,10 @@ errors were encountered.
         # the directory bit is set in the listing output
         } elsif ( $fields[PERMS] =~ /^d.*/ ) {
             # skip this directory if it's inside the /incoming directory
-            next if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) );
+            if ( $incoming_dir_flag && ! $cfg->defined(q(incoming)) ) {
+                $log->debug(q(dir in /incoming, but --incoming not used));
+                next IDGAMES_LINE;
+            }
             my $archive_dir = Archive::Directory->new(
                 parent          => $current_dir,
                 perms           => $fields[PERMS],
