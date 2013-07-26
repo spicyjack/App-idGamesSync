@@ -813,7 +813,9 @@ sub sync {
         my $temp_file = $lwp->fetch( filename => $self->short_path );
         if ( defined $temp_file ) {
             print qq(- Writing file: ) . $self->absolute_path . qq(\n);
-            move($temp_file, $self->absolute_path );
+            $log->debug(qq(Moving $temp_file to ) . $self->absolute_path);
+            $log->logdie(qq(Could not write file! $!))
+                unless (move($temp_file, $self->absolute_path ));
         }
         return 1;
     } elsif ( ref($self) eq q(Local::Directory) ) {
@@ -1812,7 +1814,7 @@ $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Terse = 1;
 
 use constant {
-    DEBUG_LOOPS => 100,
+    DEBUG_LOOPS => 50,
     PERMS       => 0,
     HARDLINKS   => 1,
     OWNER       => 2,
@@ -2223,6 +2225,13 @@ errors were encountered.
                     $log->debug(qq(Setting current directory to: <root>));
                 } else {
                     $log->debug(qq(Setting current directory to: $current_dir));
+                    if ( ! -d $cfg->get(q(path)) . qq(/$current_dir) ) {
+                        $log->debug(qq(Creating directory $current_dir));
+                        $log->debug(qq(at) . $cfg->get(q(path)));
+                        $log->logdie(qq(Could not create directory: $!))
+                            unless(mkdir $cfg->get(q(path))
+                                . qq(/$current_dir));
+                    }
                 }
                 $log->debug(q(Clearing /incoming directory flag));
                 $incoming_dir_flag = 0;
