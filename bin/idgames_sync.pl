@@ -2041,7 +2041,6 @@ errors were encountered.
         }
 
         my $in_fh = IO::File->new(qq(< $lslar_file));
-        my $local_digest;
         # create the digest object outside of any nested blocks
         my $md5 = Digest::MD5->new();
         # get the digest for the local file, if the local file exists
@@ -2049,13 +2048,18 @@ errors were encountered.
             $md5->addfile($in_fh);
             # note this resets the digest contained in $md5
             $local_digest = $md5->hexdigest();
+            # close the local file filehandle
+            $in_fh->close();
         } else {
             # if there's no previous copy of the archive on disk, just use
-            # a bogus string for the checksum
-            $local_digest = q(bogus file digest);
+            # a bogus file for the stat object, and bogus string for the
+            # checksum
+            # FIXME this is *NIX-specific
+            $lslar_stat = stat(q(/dev/null));
+            $md5->add(q(bogus file digest));
         }
-        # close the local file filehandle
-        $in_fh->close();
+        my $local_digest = $md5->hexdigest();
+
         # get the digest for the synchronized file
         my $dl_fh = IO::File->new(qq(< $dl_lslar_file));
         # $md5 has already been reset with the call to hexdigest() above
