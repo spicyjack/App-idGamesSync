@@ -770,7 +770,7 @@ sub stat_local {
         if ( -f $self->absolute_path ) {
             $self->short_type(IS_FILE);
             $self->short_status(IS_FILE);
-            $log->debug($archive->name . q( is a file!));
+            $log->debug($archive->name . q( is a file));
             # check the size listed in the tarball versus the file size
             if ( $stat->size != $archive->size ) {
                 $self->short_status(DIFF_SIZE);
@@ -786,7 +786,7 @@ sub stat_local {
         } elsif ( -d $self->absolute_path ) {
             $self->short_type(IS_DIR);
             $self->short_status(IS_DIR);
-            $log->debug($self->name . q( is a directory!));
+            $log->debug($self->name . q( is a directory));
             $self->long_status(q(Directory));
         } else {
             $self->short_type(IS_UNKNOWN);
