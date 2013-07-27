@@ -508,15 +508,15 @@ has name        => (
     isa     => q(Str),
 );
 
-=item parent
+=item parent_path
 
-The parent directory of this file/directory.
+The parent_path directory of this file/directory.
 
 =back
 
 =cut
 
-has parent      => (
+has parent_path      => (
     is      => q(rw),
     isa     => q(Str),
 );
@@ -712,13 +712,13 @@ sub BUILD {
 
     # set up parent dir and short path
     $self->name($archive->name);
-    my $parent_dir = $archive->parent;
+    my $parent_dir = $archive->parent_path;
     # trim leading slash, it will be added back later
     $parent_dir =~ s/^\///;
-    $self->parent($parent_dir);
-    $log->debug(qq(Parent path is: ) . $self->parent);
-    if ( length($self->parent) > 0 ) {
-        $self->short_path($self->parent . q(/) . $self->name);
+    $self->parent_path($parent_dir);
+    $log->debug(qq(Parent path is: ) . $self->parent_path);
+    if ( length($self->parent_path) > 0 ) {
+        $self->short_path($self->parent_path . q(/) . $self->name);
     } else {
         $self->short_path($self->name);
     }
@@ -1233,8 +1233,8 @@ sub format_simple {
     my $l = $args{local_obj};
 
     my $filepath;
-    if ( $a->parent !~ /\./ ) {
-        $filepath = $a->parent . q(/) . $a->name;
+    if ( $a->parent_path !~ /\./ ) {
+        $filepath = $a->parent_path . q(/) . $a->name;
     } else {
         $filepath = $a->name;
     }
@@ -1276,7 +1276,7 @@ if ( length($l->long_status) > 0 ) {
 
 format MORE =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$a->parent . q(/) . $a->name
+$a->parent_path . q(/) . $a->name
  archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<
 $a->perms, $a->owner, $a->group, $a->mod_time, $a->size, $notes
  local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<<<<<<<<
@@ -1310,7 +1310,7 @@ sub format_full {
 
 format FULL =
 - @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$a->parent . q(/) . $a->name
+$a->parent_path . q(/) . $a->name
 Archive:                      Local:
 permissions: @>>>>>>>>>>>>    permissions: @>>>>>>>>>>>>
 $a->perms, $l->perms
