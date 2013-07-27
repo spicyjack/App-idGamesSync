@@ -93,13 +93,16 @@ our @options = (
 
  perl idgames_sync.pl [options]
 
- Help/verbosity options:
+ Help options:
  -h|--help          Displays script options and usage
- -d|--debug         Sets logging level to DEBUG, tons of output
- -v|--verbose       Sets logging level to INFO, verbose output
  -x|--examples      Show examples of script execution
  -m|--morehelp      Show extended help info (format/type specifiers)
 
+ Verbosity/debugging options:
+ -v|--verbose       Sets logging level to INFO, verbose output
+ -d|--debug         Sets logging level to DEBUG, tons of output
+ --debug-files      Sync this many files before exiting (default: 50)
+                    Requires '--debug'
  Script options:
  -n|--dry-run       Don't sync content, explain script actions instead
  -e|--exclude       Don't use these mirror URL(s) for syncing
@@ -2189,6 +2192,9 @@ errors were encountered.
                         push(@synced_files, $archive_file);
                     }
                 }
+                # FIXME check here that the downloaded file matches the size
+                # shown in ls-laR.gz; make another call to stat_local; make
+                # another call to stat_local
             } else {
                 $log->debug(q(File does not need to be sync'ed));
             }
