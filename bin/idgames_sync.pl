@@ -550,6 +550,7 @@ use constant {
 };
 
 my @_dotfiles = qw( .message .DS_Store .mirror_log .listing );
+my $_metafiles = qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS/;
 
 =head3 Attributes
 
@@ -735,8 +736,7 @@ sub stat_local {
     my $self = shift;
     my $log = Log::Log4perl->get_logger();
 
-    $log->debug(qq(Creating stat object using local file/dir; ));
-    $log->debug(q(Local file/dir: ) . $self->absolute_path);
+    $log->debug(q(stat'ing file/dir: ) . $self->absolute_path);
     my $stat = stat( $self->absolute_path );
     my $archive = $self->archive_obj;
 
@@ -811,7 +811,20 @@ sub sync {
     my $lwp = $args{lwp};
     $log->debug(q(Syncing file/dir ') . $self->name . q('));
     if ( ref($self) eq q(Local::File) ) {
-        my $temp_file = $lwp->fetch( filepath => $self->short_path );
+        # check to see if this is one of the metadata files, or a file in the
+        # /newstuff directory; if so, sync it from the master mirror, as the
+        # other mirrors may not be in sync and have the file
+        my $temp_file;
+        if ( $self->short_path =~ /$_metafiles/
+                || $self->parent_path =~ /newstuff/ ) {
+            $temp_file = $lwp->fetch(
+                base_url => $lwp->master_mirror,
+                filepath => $self->short_path
+            );
+        } else {
+            # use a random mirror
+            $temp_file = $lwp->fetch( filepath => $self->short_path );
+        }
         if ( defined $temp_file ) {
             print qq(- Writing file: ) . $self->absolute_path . qq(\n);
             $log->debug(qq(Moving $temp_file to ) . $self->absolute_path);
@@ -1536,12 +1549,12 @@ sub fetch {
 
     my $filepath = $args{filepath};
     my $base_url = $args{base_url};
+
     # set a base URL if one was not set by the caller
+    # if $self->base_url is undefined, a random mirror will be chosen
     if ( ! defined $base_url ) {
         $base_url = $self->get_base_url;
     }
-
-    # if the user didn't pass in a URL, pick one at random
 
     # remove leading slash
     if ( $filepath !~ /^\// ) {
