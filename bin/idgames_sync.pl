@@ -1568,7 +1568,6 @@ sub fetch {
     my $nf = Number::Format->new();
 
     # grab the file
-    $log->debug(qq(Fetching file: ) . $base_url . $filepath . qq(\n));
     print qq(- Fetching file: ) . $base_url . $filepath . qq(\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
