@@ -810,7 +810,7 @@ sub sync {
 
     my $lwp = $args{lwp};
     if ( ref($self) eq q(Local::File) ) {
-        my $temp_file = $lwp->fetch( filename => $self->short_path );
+        my $temp_file = $lwp->fetch( filepath => $self->short_path );
         if ( defined $temp_file ) {
             print qq(- Writing file: ) . $self->absolute_path . qq(\n);
             $log->debug(qq(Moving $temp_file to ) . $self->absolute_path);
@@ -1493,9 +1493,10 @@ Required arguments:
 
 =over
 
-=item filename
+=item filepath
 
-The name of the file to download.
+The "relative path" of the file to download, which is combined with the "base
+path" in order to determine the full URL.
 
 =back
 
@@ -1505,14 +1506,14 @@ Optional arguments:
 
 =item base_url
 
-The base URL to use for downloading files.  Allows for recursive calls using
-different URLs.
+The base URL to use for downloading files.  This allows for recursive fetching
+using different base URLs.
 
 =back
 
 The C<fetch()> method fetches files from the remote mirror.  Note that the
-C<filename> argument should be fully qualified from the server's "document
-root", i.e.  given a URL of C<http://example.com>, your C<$filename> should be
+C<filepath> argument should be fully qualified from the server's "document
+root", i.e.  given a URL of C<http://example.com>, your C<$filepath> should be
 something like C<path/to/file>, so that the full URL would become
 C<http://example.com/path/to/file>.
 
@@ -1530,10 +1531,10 @@ sub fetch {
 
     my $log = Log::Log4perl->get_logger();
 
-    $log->logdie(qq(missing 'filename' argument))
-        unless ( exists $args{filename} );
+    $log->logdie(qq(missing 'filepath' argument))
+        unless ( exists $args{filepath} );
 
-    my $filename = $args{filename};
+    my $filepath = $args{filepath};
     my $base_url = $args{base_url};
     # set a base URL if one was not set by the caller
     if ( ! defined $base_url ) {
@@ -1543,8 +1544,8 @@ sub fetch {
     # if the user didn't pass in a URL, pick one at random
 
     # remove leading slash
-    if ( $filename !~ /^\// ) {
-        $filename = q(/) . $filename;
+    if ( $filepath !~ /^\// ) {
+        $filepath = q(/) . $filepath;
     }
 
     # arguments for creating temp files
@@ -1567,23 +1568,23 @@ sub fetch {
     my $nf = Number::Format->new();
 
     # grab the file
-    $log->debug(qq(Fetching file: ) . $base_url . $filename . qq(\n));
-    print qq(- Fetching file: ) . $base_url . $filename . qq(\n);
+    $log->debug(qq(Fetching file: ) . $base_url . $filepath . qq(\n));
+    print qq(- Fetching file: ) . $base_url . $filepath . qq(\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
-        $base_url . $filename,
+        $base_url . $filepath,
         q(:content_file) => $fh->filename,
     );
     if ( $response->is_error() ) {
-        $log->warn(qq(Error downloading '$filename'; ));
+        $log->warn(qq(Error downloading '$filepath'; ));
         $log->warn(q(Response status: ) . $response->status_line() );
         my $master_mirror = $self->master_mirror;
         if ( $response->code() == 404 && $base_url !~ /$master_mirror/ ) {
-            $log->warn(qq(Retrying download of: $filename ));
+            $log->warn(qq(Retrying download of: $filepath ));
             $log->warn(qq(from ) . $self->master_mirror );
             # recursive call here, make another try with the master mirror
             return $self->fetch(
-                filename => $filename,
+                filepath => $filepath,
                 base_url => $self->master_mirror,
             );
         } else {
@@ -2034,7 +2035,7 @@ errors were encountered.
         }
         # returns undef if there was a problem fetching the file
         $dl_lslar_file = $lwp->fetch(
-            filename => q(ls-laR.gz),
+            filepath => q(ls-laR.gz),
             base_url => $lslar_url,
         );
         my $dl_lslar_stat = stat($dl_lslar_file);
@@ -2108,7 +2109,7 @@ errors were encountered.
     IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
-        $log->debug(qq(line: $line));
+        $log->debug(qq(line: >>>$line<<<));
         my @fields = split(/\s+/, $line);
         my $name_field;
         # we're not expecting any more than TOTAL_FIELDS fields returned
@@ -2174,6 +2175,8 @@ errors were encountered.
                         push(@synced_files, $archive_file);
                     }
                 }
+            } else {
+                $log->debug(q(file does not need to be sync'ed));
             }
         # the directory bit is set in the listing output
         } elsif ( $fields[PERMS] =~ /^d.*/ ) {
