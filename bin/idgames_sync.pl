@@ -820,6 +820,7 @@ sub sync {
         my $temp_file;
         if ( $self->short_path =~ /$_metafiles/
                 || $self->parent_path =~ /newstuff/ ) {
+            $log->debug(q(Syncing "meta" file from master mirror));
             $temp_file = $lwp->fetch(
                 base_url => $lwp->master_mirror,
                 filepath => $self->short_path
@@ -2154,7 +2155,7 @@ errors were encountered.
             $total_archive_files++;
             $log->debug(qq(Creating archive file object '$name_field'));
             my $archive_file = Archive::File->new(
-                parent          => $current_dir,
+                parent_path     => $current_dir,
                 perms           => $fields[PERMS],
                 hardlinks       => $fields[HARDLINKS],
                 owner           => $fields[OWNER],
@@ -2207,7 +2208,7 @@ errors were encountered.
             }
             $log->debug(qq(Creating archive dir object '$name_field'));
             my $archive_dir = Archive::Directory->new(
-                parent          => $current_dir,
+                parent_path     => $current_dir,
                 perms           => $fields[PERMS],
                 hardlinks       => $fields[HARDLINKS],
                 owner           => $fields[OWNER],
