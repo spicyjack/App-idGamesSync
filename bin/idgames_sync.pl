@@ -809,6 +809,7 @@ sub sync {
         unless ( defined $args{lwp} );
 
     my $lwp = $args{lwp};
+    $log->debug(q(Syncing file/dir ') . $self->name . q('));
     if ( ref($self) eq q(Local::File) ) {
         my $temp_file = $lwp->fetch( filepath => $self->short_path );
         if ( defined $temp_file ) {
@@ -823,11 +824,10 @@ sub sync {
             $log->debug(qq(Directory ) . $self->absolute_path
                 . qq( already exists));
         } else {
-            if ( ! mkdir($self->absolute_path, q(0755)) ) {
-                $log->warn(q(Failed to create directory )
-                    . $self->absolute_path);
-                $log->logdie(q(Error message: ) . $!);
-            }
+            print qq(- Creating directory ) . $self->absolute_path . qq(\n);
+            $log->logdie(qq(Failed to create directory: $!))
+                unless ( mkdir($self->absolute_path) );
+            print qq(- Directory created successfully\n);
             return 1;
         }
     } else {
@@ -2124,7 +2124,7 @@ errors were encountered.
         }
         # a file, the directory bit will not be set in the listing output
         if ( defined $name_field ) {
-            $log->debug(qq(Reassembled filename: '$name_field'));
+            $log->debug(qq(Reassembled file/dir name: '$name_field'));
         }
         if ( $fields[PERMS] =~ /^-.*/ ) {
             # skip this file if it's inside the /incoming directory
@@ -2136,6 +2136,7 @@ errors were encountered.
                 next IDGAMES_LINE;
             }
             $total_archive_files++;
+            $log->debug(qq(Creating archive file object '$name_field'));
             my $archive_file = Archive::File->new(
                 parent          => $current_dir,
                 perms           => $fields[PERMS],
@@ -2148,6 +2149,7 @@ errors were encountered.
                 name            => $name_field,
             );
             $total_archive_size += $archive_file->size;
+            $log->debug(qq(Creating local file object '$name_field'));
             my $local_file = Local::File->new(
                 opts_path   => $cfg->get(q(path)),
                 archive_obj => $archive_file,
@@ -2175,7 +2177,7 @@ errors were encountered.
                     }
                 }
             } else {
-                $log->debug(q(file does not need to be sync'ed));
+                $log->debug(q(File does not need to be sync'ed));
             }
         # the directory bit is set in the listing output
         } elsif ( $fields[PERMS] =~ /^d.*/ ) {
@@ -2184,6 +2186,7 @@ errors were encountered.
                 $log->debug(q(dir in /incoming, but --incoming not used));
                 next IDGAMES_LINE;
             }
+            $log->debug(qq(Creating archive dir object '$name_field'));
             my $archive_dir = Archive::Directory->new(
                 parent          => $current_dir,
                 perms           => $fields[PERMS],
@@ -2196,10 +2199,12 @@ errors were encountered.
                 name            => $name_field,
                 total_blocks    => 0,
             );
+            $log->debug(qq(Creating local dir object '$name_field'));
             my $local_dir = Local::Directory->new(
                 opts_path       => $cfg->get(q(path)),
                 archive_obj    => $archive_dir,
             );
+            $local_dir->stat_local();
             $report->write_record(
                 archive_obj    => $archive_dir,
                 local_obj      => $local_dir,
@@ -2208,6 +2213,8 @@ errors were encountered.
                 if ( ! $cfg->defined(q(dry-run)) ) {
                     $local_dir->sync( lwp => $lwp );
                 }
+            } else {
+                $log->debug(qq(Dir does not need to be synced));
             }
         # A new directory entry
         } elsif ( $fields[PERMS] =~ /^\.[\/\w\-_\.]*:$/ ) {
@@ -2227,13 +2234,6 @@ errors were encountered.
                     $log->debug(qq(Setting current directory to: <root>));
                 } else {
                     $log->debug(qq(Setting current directory to: $current_dir));
-                    if ( ! -d $cfg->get(q(path)) . qq(/$current_dir) ) {
-                        $log->debug(qq(Creating directory $current_dir));
-                        $log->debug(qq(at) . $cfg->get(q(path)));
-                        $log->logdie(qq(Could not create directory: $!))
-                            unless(mkdir $cfg->get(q(path))
-                                . qq(/$current_dir));
-                    }
                 }
                 $log->debug(q(Clearing /incoming directory flag));
                 $incoming_dir_flag = 0;
