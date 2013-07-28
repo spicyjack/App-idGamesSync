@@ -63,6 +63,7 @@ our @options = (
     q(help|h),
     q(debug|D|d),
     q(debug-files=i), # how many lines to parse/compare from ls-laR.gz
+    q(debug-noexit), # don't exit when debugging
     q(verbose|v),
     q(examples|x),
     q(morehelp|m),
@@ -101,6 +102,7 @@ our @options = (
  Verbosity/debugging options:
  -v|--verbose       Sets logging level to INFO, verbose output
  -d|--debug         Sets logging level to DEBUG, tons of output
+ --debug-noexit     Don't exit if --debug is set (ignores --debug-files)
  --debug-files      Sync this many files before exiting (default: 50)
                     Requires '--debug'
  Script options:
@@ -831,7 +833,8 @@ sub sync {
         }
         if ( defined $temp_file ) {
             print qq(- Writing file: ) . $self->absolute_path . qq(\n);
-            $log->debug(qq(Moving $temp_file to ) . $self->absolute_path);
+            $log->debug(qq(Moving $temp_file...));
+            $log->debug(q(to ) . $self->absolute_path);
             $log->logdie(qq(Could not write file! $!))
                 unless (move($temp_file, $self->absolute_path ));
         }
@@ -2271,6 +2274,10 @@ errors were encountered.
         }
         $counter++;
         if ( $log->is_debug() ) {
+            # don't worry about counters or constants if --debug-noexit was
+            # used
+            next IDGAMES_LINE if ( $cfg->defined(q(debug-noexit)) );
+            # check to see if --debug-files was used
             if ( $cfg->defined(q(debug-files)) ) {
                 if ( $counter > $cfg->get(q(debug-files)) ) {
                     $log->debug(q|reached | . $cfg->get(q(debug-files))
@@ -2279,6 +2286,7 @@ errors were encountered.
                     last IDGAMES_LINE;
                 }
             } else {
+                # go with the constant 'DEBUG_LOOPS'
                 if ( $counter == DEBUG_LOOPS ) {
                     $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS
                         . q|) reached...|);
