@@ -2196,9 +2196,15 @@ errors were encountered.
                         push(@synced_files, $archive_file);
                     }
                 }
-                # FIXME check here that the downloaded file matches the size
+                $local_file->stat_local();
+                # check here that the downloaded file matches the size
                 # shown in ls-laR.gz; make another call to stat_local; make
                 # another call to stat_local
+                if ( $local_file->size != $archive_file->size ) {
+                    $log->warn(q(Downloaded size: ) . $local_file->size
+                        . q( doesn't match archive file size: )
+                        . $archive_file->size);
+                }
             } else {
                 $log->debug(q(File does not need to be sync'ed));
             }
