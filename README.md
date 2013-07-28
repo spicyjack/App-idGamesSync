@@ -8,7 +8,9 @@ them, instead of mirroring everything, which can include documentation,
 shareware releases of Doom, themes for Windows, sounds, game graphics, and
 miscellaneous files.
 
-## What is DOOM?  (from http://doomwiki.org/wiki/Doom) ##
+## What is DOOM? ##
+
+(from http://doomwiki.org/wiki/Doom)
 
 "Doom (officially cased DOOM) is the first release of the Doom series, and one
 of the games that consolidated the first-person shooter genre. With a science
