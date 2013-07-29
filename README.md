@@ -37,7 +37,7 @@ To install this module, run the following commands:
 
 ## SUPPORT AND DOCUMENTATION ##
 
-After installing, you can find documentation for this module with the
+After installing, you can find documentation for this application with the
 perldoc command.
 
     perldoc idgames_sync.pl
