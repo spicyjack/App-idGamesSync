@@ -2188,6 +2188,7 @@ errors were encountered.
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
                     push(@synced_files, $archive_file);
+                    next IDGAMES_LINE;
                 } else {
                     my $sync_status = $local_file->sync( lwp => $lwp );
                     if ( $sync_status ) {
