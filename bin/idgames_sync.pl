@@ -15,7 +15,7 @@ Version v0.0.3
 
 =cut
 
-use version; our $VERSION = qv('0.0.3');
+use version; our $VERSION = qv('0.0.4');
 
 # shortcut to get the name of the file this script lives in
 use File::Basename;
