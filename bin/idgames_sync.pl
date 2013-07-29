@@ -2057,10 +2057,10 @@ errors were encountered.
             filepath => q(ls-laR.gz),
             base_url => $lslar_url,
         );
-        my $dl_lslar_stat = stat($dl_lslar_file);
         if ( ! defined $dl_lslar_file ) {
-            $log->logdie(qq(Could not download ls-laR.gz file));
+            $log->logdie(qq(Error downloading ls-laR.gz file));
         }
+        my $dl_lslar_stat = stat($dl_lslar_file);
 
         my $in_fh = IO::File->new(qq(< $lslar_file));
         # create the digest object outside of any nested blocks
