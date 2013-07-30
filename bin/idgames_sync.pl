@@ -1600,7 +1600,7 @@ sub fetch {
         $log->warn(qq(Error downloading '$filepath'; ));
         $log->warn(q(Response status: ) . $response->status_line() );
         my $master_mirror = $self->master_mirror;
-        if ( $response->code() == 404 && $base_url !~ /$master_mirror/ ) {
+        if ( $base_url !~ /$master_mirror/ ) {
             $log->warn(qq(Retrying download of: $filepath ));
             $log->warn(qq(from ) . $self->master_mirror );
             # recursive call here, make another try with the master mirror
