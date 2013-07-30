@@ -1589,7 +1589,8 @@ sub fetch {
     my $nf = Number::Format->new();
 
     # grab the file
-    print qq(- Fetching file: ) . $base_url . $filepath . qq(\n);
+    $base_url =~ qr!^(ftp|http|https){1}://([\w.-]+)/(.*)$!;
+    print qq(- Fetching file '$filepath' from '$2'\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
         $base_url . $filepath,
