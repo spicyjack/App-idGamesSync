@@ -1361,6 +1361,7 @@ my @usable_mirrors;
 my @idgames_mirrors = qw(
     ftp://ftp.fu-berlin.de/pc/games/idgames
     ftp://ftp.ntua.gr/pub/vendors/idgames
+    ftp://ftp.mancubus.net/pub/idgames/
     http://youfailit.net/pub/idgames
     http://www.gamers.org/pub/idgames
 );
