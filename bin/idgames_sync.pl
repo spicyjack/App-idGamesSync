@@ -1363,7 +1363,6 @@ my @idgames_mirrors = qw(
     ftp://ftp.ntua.gr/pub/vendors/idgames
     ftp://ftp.mancubus.net/pub/idgames/
     http://youfailit.net/pub/idgames
-    http://www.gamers.org/pub/idgames
 );
 
 =head3 Attributes
