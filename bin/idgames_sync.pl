@@ -1569,20 +1569,18 @@ sub fetch {
         $filepath = q(/) . $filepath;
     }
 
-    # arguments for creating temp files
-    my %temp_args = (
-        UNLINK      => 0,
-        TEMPLATE    => q(idgs.XXXXXXXX),
-        SUFFIX      => q(.tmp),
-    );
-
     # add a temporary directory?
     if ( defined $self->tempdir ) {
         $temp_args{DIR} = $self->tempdir;
     }
 
     # create a tempfile for the download
-    my $fh = File::Temp->new( %temp_args );
+    my $fh = File::Temp->new(
+        # don't unlink files by default; this should be done by the caller
+        UNLINK      => 0,
+        TEMPLATE    => q(idgs.XXXXXXXX),
+        SUFFIX      => q(.tmp),
+    );
     $log->debug(qq(Created temp file ) . $fh->filename );
 
     # for formatting synchronized file sizes
@@ -1599,6 +1597,9 @@ sub fetch {
     if ( $response->is_error() ) {
         $log->warn(qq(Error downloading '$filepath'; ));
         $log->warn(q(Response status: ) . $response->status_line() );
+        $log->debug(q(Deleting tempfile ) . $fh->filename );
+        unlink $fh->filename;
+        undef $fh;
         my $master_mirror = $self->master_mirror;
         if ( $base_url !~ /$master_mirror/ ) {
             $log->warn(qq(Retrying download of: $filepath ));
