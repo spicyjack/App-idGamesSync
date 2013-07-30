@@ -1417,6 +1417,19 @@ has q(master_mirror) => (
     default => q(ftp://ftp.fu-berlin.de/pc/games/idgames),
 );
 
+=item url_regex
+
+Regex to get different bits of the URL back, to be used in script/debug output.
+
+=cut
+
+has q(url_regex) => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    # $1 = scheme, $2 = host, $3 is path
+    default => sub {qr!^(ftp|http|https){1}://([\w.-]+)/(.*)$!;}
+);
+
 =item tempdir
 
 Temporary directory to use for downloading files.  Defaults to C<undef>, which
@@ -1504,7 +1517,9 @@ sub get_base_url {
         $base_url = $self->base_url;
     }
 
-    $log->debug(qq(returning: $base_url));
+    # $1 = scheme, $2 = host, $3 is path
+    $base_url =~ $self->url_regex;
+    $log->debug(qq(Returning base URL host: '$2'));
     return $base_url;
 }
 
@@ -1569,15 +1584,11 @@ sub fetch {
         $filepath = q(/) . $filepath;
     }
 
-    # add a temporary directory?
-    if ( defined $self->tempdir ) {
-        $temp_args{DIR} = $self->tempdir;
-    }
-
     # create a tempfile for the download
     my $fh = File::Temp->new(
         # don't unlink files by default; this should be done by the caller
         UNLINK      => 0,
+        DIR         => $self->tempdir,
         TEMPLATE    => q(idgs.XXXXXXXX),
         SUFFIX      => q(.tmp),
     );
@@ -1587,7 +1598,8 @@ sub fetch {
     my $nf = Number::Format->new();
 
     # grab the file
-    $base_url =~ qr!^(ftp|http|https){1}://([\w.-]+)/(.*)$!;
+    # $1 = scheme, $2 = host, $3 is path
+    $base_url =~ $self->url_regex;
     print qq(- Fetching file '$filepath' from '$2'\n);
     my $ua = $self->user_agent();
     my $response = $ua->get(
@@ -1603,7 +1615,9 @@ sub fetch {
         my $master_mirror = $self->master_mirror;
         if ( $base_url !~ /$master_mirror/ ) {
             $log->warn(qq(Retrying download of: $filepath ));
-            $log->warn(qq(from ) . $self->master_mirror );
+            # $1 = scheme, $2 = host, $3 is path
+            $self->master_mirror =~ $self->url_regex;
+            $log->warn(qq(from $2));
             # recursive call here, make another try with the master mirror
             return $self->fetch(
                 filepath => $filepath,
