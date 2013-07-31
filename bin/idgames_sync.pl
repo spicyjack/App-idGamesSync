@@ -718,13 +718,13 @@ sub BUILD {
     # trim leading slash, it will be added back later
     $parent_dir =~ s/^\///;
     $self->parent_path($parent_dir);
-    $log->debug(qq(Parent path is: ) . $self->parent_path);
+    #$log->debug(qq(Parent path is: ) . $self->parent_path);
     if ( length($self->parent_path) > 0 ) {
         $self->short_path($self->parent_path . q(/) . $self->name);
     } else {
         $self->short_path($self->name);
     }
-    $log->debug(qq(Short path is: ) . $self->short_path);
+    #$log->debug(qq(Short path is: ) . $self->short_path);
 
     $self->absolute_path($self->opts_path . $self->short_path);
     $log->debug(qq(Absolute path is: ) . $self->absolute_path);
