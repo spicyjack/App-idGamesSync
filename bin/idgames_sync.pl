@@ -1352,6 +1352,7 @@ package LWP::Wrapper;
 
 use File::Temp;
 use LWP::UserAgent;
+use URI::Escape;
 use Mouse;
 use Number::Format;
 
@@ -1601,8 +1602,11 @@ sub fetch {
     $base_url =~ $self->url_regex;
     print qq(- Fetching file '$filepath' from '$2'\n);
     my $ua = $self->user_agent();
+    my $encoded_url = $base_url
+        . uri_escape_utf8($filepath, qq(^A-Za-z0-9\-\._~\/));
+    $log->debug(qq(Encoded URL: $encoded_url));
     my $response = $ua->get(
-        $base_url . $filepath,
+        $encoded_url,
         q(:content_file) => $fh->filename,
     );
     if ( $response->is_error() ) {
