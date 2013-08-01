@@ -1442,6 +1442,18 @@ has q(tempdir) => (
     isa     => q(Str),
 );
 
+=item temp_fh
+
+Temporary filehandle for downloading files.  Every time the L<fetch> method is
+called, a new tempfile is created and stored in this attribute.
+
+=cut
+
+has q(temp_fh) => (
+    is      => q(rw),
+    isa     => q(FileHandle),
+);
+
 =back
 
 =head3 Methods
@@ -1483,6 +1495,7 @@ sub BUILD {
             $log->debug(qq(Usable mirror: $um));
         }
     }
+
 }
 
 =item get_random_mirror
@@ -1573,6 +1586,17 @@ sub fetch {
     my $filepath = $args{filepath};
     my $base_url = $args{base_url};
 
+    $log->debug(q(Installing signal handler for SIGINT/SIGTERM));
+    $SIG{INT} = $SIG{TERM} = sub {
+        my $signal = shift;
+
+        $log->fatal(qq(Received SIG$signal!));
+        if ( defined $self->temp_fh ) {
+            unlink $self->temp_fh->filename;
+        }
+        $log->logdie(qq(Deleting temp files and exiting!));
+    }; # $SIG{INT}/SIG{TERM}
+
     # set a base URL if one was not set by the caller
     # if $self->base_url is undefined, a random mirror will be chosen
     if ( ! defined $base_url ) {
@@ -1585,14 +1609,15 @@ sub fetch {
     }
 
     # create a tempfile for the download
-    my $fh = File::Temp->new(
-        # don't unlink files by default; this should be done by the caller
-        UNLINK      => 0,
-        DIR         => $self->tempdir,
-        TEMPLATE    => q(idgs.XXXXXXXX),
-        SUFFIX      => q(.tmp),
+    $self->temp_fh(File::Temp->new(
+            # don't unlink files by default; this should be done by the caller
+            UNLINK      => 0,
+            DIR         => $self->tempdir,
+            TEMPLATE    => q(idgs.XXXXXXXX),
+            SUFFIX      => q(.tmp),
+        )
     );
-    $log->debug(qq(Created temp file ) . $fh->filename );
+    $log->debug(qq(Created temp file ) . $self->temp_fh->filename );
 
     # for formatting synchronized file sizes
     my $nf = Number::Format->new();
@@ -1607,14 +1632,14 @@ sub fetch {
     $log->debug(qq(Encoded URL: $encoded_url));
     my $response = $ua->get(
         $encoded_url,
-        q(:content_file) => $fh->filename,
+        q(:content_file) => $self->temp_fh->filename,
     );
     if ( $response->is_error() ) {
         $log->warn(qq(Error downloading '$filepath'; ));
         $log->warn(q(Response status: ) . $response->status_line() );
-        $log->debug(q(Deleting tempfile ) . $fh->filename );
-        unlink $fh->filename;
-        undef $fh;
+        $log->debug(q(Deleting tempfile ) . $self->temp_fh->filename );
+        unlink $self->temp_fh->filename;
+        $self->temp_fh(undef);
         my $master_mirror = $self->master_mirror;
         if ( $base_url !~ /$master_mirror/ ) {
             $log->warn(qq(Retrying download of: $filepath ));
@@ -1638,10 +1663,10 @@ sub fetch {
         #my $content = $response->content;
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
-                   = stat($fh);
+                   = stat($self->temp_fh);
         print q(- Download successful, downloaded ) . $nf->format_bytes($size)
             . qq| byte(s)\n|;
-        return $fh->filename;
+        return $self->temp_fh->filename;
     }
 }
 
