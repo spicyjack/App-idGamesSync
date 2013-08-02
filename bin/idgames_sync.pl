@@ -1868,7 +1868,8 @@ use constant {
 };
 
 ### script variables
-my $report_types = q(headers:local:archive:size:same);
+my $allowed_report_types = q(headers:local:archive:size:same);
+my $report_types = q(local:size);
 my $report_format = q(more);
 
 =head1 DESCRIPTION
@@ -1998,11 +1999,16 @@ errors were encountered.
     }
 
     ### REPORT TYPES
+    # the default report type is now size-local
+    if ( $cfg->defined(q(size-same)) ) {
+        $report_types = q(size:same);
+    }
+
     if ( $cfg->defined(q(type)) ) {
         my @reports = @{$cfg->get(q(type))};
         my @requested_types;
         foreach my $type ( @reports ) {
-            if ( $report_types =~ /$type/ ) {
+            if ( $allowed_report_types !~ /$type/i ) {
                 $log->logdie(qq(Report type '$type' is not a valid report));
             } else {
                 push(@requested_types, $type);
@@ -2010,18 +2016,7 @@ errors were encountered.
         }
         $report_types = join(q(:), @requested_types);
     }
-    if ( $cfg->defined(q(size-local)) ) {
-        if ( $cfg->defined(q(type)) ) {
-            $log->warn(qq(--size-local overrides any --type options used));
-        }
-        $report_types = q(size:local);
-    }
-    if ( $cfg->defined(q(size-same)) ) {
-        if ( $cfg->defined(q(type)) ) {
-            $log->warn(qq(--size-same overrides any --type options used));
-        }
-        $report_types = q(size:same);
-    }
+
 
     ### REPORT FORMATS
     if ( $cfg->defined(q(format)) ) {
