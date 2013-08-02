@@ -123,6 +123,8 @@ our @options = (
  --incoming         Show files located in the /incoming directory
  --tempdir          Temporary directory to use when downloading files
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+ --size-local       Combination of '--type size --type local'
+ --size-same        Combination of '--type size --type same'
 
 =head1 DESCRIPTION
 
