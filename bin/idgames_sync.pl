@@ -84,6 +84,7 @@ our @options = (
     q(dotfiles), # don't show dotfiles in reports - .filename
     q(headers), # show directory headers and blocks used
     q(tempdir=s), # temporary directory to use for tempfiles
+    q(skip-ls-lar|skip-lslar), # update the ls-laR.gz file, then exit
     q(update-ls-lar|update-lslar), # update the ls-laR.gz file, then exit
     # combination options
     q(size-local|local-size|sl), # show size mismatches, missing local files
@@ -123,6 +124,7 @@ our @options = (
  --incoming         Show files located in the /incoming directory
  --tempdir          Temporary directory to use when downloading files
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+ --skip-ls-lar      Don't fetch 'ls-laR.gz' (after using '--update-ls-lar')
  --size-local       Combination of '--type size --type local'
  --size-same        Combination of '--type size --type same'
 
@@ -2062,7 +2064,7 @@ errors were encountered.
     }
 
     ### UPDATE LS-LAR.GZ
-    if ( ! $cfg->defined(q(dry-run)) ) {
+    if ( ! $cfg->defined(q(dry-run)) && ! $cfg->defined(q(skip-ls-lar)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
         my $lslar_url = $lwp->master_mirror;
