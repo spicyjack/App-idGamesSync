@@ -2059,7 +2059,8 @@ errors were encountered.
         $log->fatal(qq|(Checked: $lslar_file)|);
         $log->fatal(qq(If you are creating a new mirror, please use the));
         $log->fatal(qq('--create-mirror' switch; otherwise, check that));
-        $log->fatal(qq(the '--path' switch is pointing to the correct path.));
+        $log->fatal(qq(the '--path' switch is pointing to the directory));
+        $log->fatal(qq(where the local copy of 'idgames' is located.));
         $log->logdie(qq(Exiting script...));
     }
 
