@@ -755,7 +755,9 @@ sub stat_local {
         $self->short_type(IS_MISSING);
         $self->short_status(IS_MISSING);
         $self->long_status(q(Missing locally));
+        $self->append_notes(qq(Missing on local system));
         $self->needs_sync(1);
+
     } else {
         my $lsperms = File::Stat::Ls->new();
         $self->perms($lsperms->format_mode($stat->mode) );
