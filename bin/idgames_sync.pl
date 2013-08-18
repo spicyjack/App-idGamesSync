@@ -1287,9 +1287,9 @@ if ( length($l->long_status) > 0 ) {
 format MORE =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 $a->parent_path . q(/) . $a->name
- archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<
+  archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<
 $a->perms, $a->owner, $a->group, $a->mod_time, $a->size, $notes
- local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<<<<<<<<
+  local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<<<<<<<<
 $l->perms, $l->owner, $l->group, $l->mod_time, $l->size, $l->long_status
 .
 ### END FORMAT
@@ -1319,21 +1319,21 @@ sub format_full {
     my $a = $args{archive_obj};
 
 format FULL =
-- @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+@<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 $a->parent_path . q(/) . $a->name
-Archive:                      Local:
-permissions: @>>>>>>>>>>>>    permissions: @>>>>>>>>>>>>
-$a->perms, $l->perms
-owner:       @>>>>>>>>>>>>    owner:       @>>>>>>>>>>>>
-$a->owner, $l->owner
-group:       @>>>>>>>>>>>>    group:       @>>>>>>>>>>>>
-$a->group, $l->group
-mtime:       @<<<<<<<<<<<<    mtime:       @<<<<<<<<<<<<
-$a->mod_time, $l->mod_time
-size:        @############    size:        @############
-$a->size, $l->size
-Notes: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-$l->notes
+  Archive:                      Local:
+  permissions: @>>>>>>>>>>>>    permissions: @>>>>>>>>>>>>
+  $a->perms, $l->perms
+  owner:       @>>>>>>>>>>>>    owner:       @>>>>>>>>>>>>
+  $a->owner, $l->owner
+  group:       @>>>>>>>>>>>>    group:       @>>>>>>>>>>>>
+  $a->group, $l->group
+  mtime:       @<<<<<<<<<<<<    mtime:       @<<<<<<<<<<<<
+  $a->mod_time, $l->mod_time
+  size:        @############    size:        @############
+  $a->size, $l->size
+  Notes: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  $l->notes
 .
 ### END FORMAT
 
