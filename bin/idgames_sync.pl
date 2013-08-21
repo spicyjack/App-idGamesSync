@@ -781,8 +781,16 @@ sub stat_local {
         my $lsperms = File::Stat::Ls->new();
         $self->perms($lsperms->format_mode($stat->mode) );
         $self->hardlinks($stat->nlink);
-        my $file_owner = getpwuid($stat->uid) || q(unknown);
-        my $file_group = getgrgid($stat->gid) || q(unknown);
+        my ($file_owner, $file_group);
+        if ( $self->is_mswin32 ) {
+            # Microsoft Windows; use Win32 modules
+            $file_owner = Win32::LoginName() || q(unknown);
+            $file_group = $file_owner;
+        } else {
+            # *NIX platforms
+            $file_owner = getpwuid($stat->uid) || q(unknown);
+            $file_group = getgrgid($stat->gid) || q(unknown);
+        }
         $self->owner( $file_owner );
         $self->group( $file_group );
         $self->size($stat->size);
