@@ -191,7 +191,7 @@ sub new {
 
     # set a flag if we're running on 'MSWin32'
     if ( $OSNAME eq q(MSWin32) ) {
-        $self->set(q(mswin32), 1);
+        $self->set(q(is_mswin32), 1);
     }
     # return this object to the caller
     return $self;
@@ -579,6 +579,17 @@ has opts_path => (
     isa     => q(Str),
 );
 
+=item archive_obj
+
+The Archive object that his object is based off of.
+
+=cut
+
+has archive_obj => (
+    is      => q(rw),
+    isa     => q(Object),
+);
+
 =item absolute_path
 
 The absolute path to this file or directory, from the filesystem root.
@@ -590,15 +601,15 @@ has absolute_path => (
     isa     => q(Str),
 );
 
-=item archive_obj
+=item is_mswin32
 
-The Archive object that his object is based off of.
+Boolean flag that is set when running under Windows platforms.
 
 =cut
 
-has archive_obj => (
+has is_mswin32 => (
     is      => q(rw),
-    isa     => q(Object),
+    isa     => q(Bool),
 );
 
 =item short_path
@@ -702,6 +713,11 @@ The path on the local filesystem to the C<idgames> archive directory.
 
 The C<archive> object, which is used to map paths in the archive to local
 system paths.
+
+=item is_mswin32
+
+Boolean flag that should be set when running this script on top of a Microsoft
+Windows platform.  This changes how a file's userid is determined.
 
 =back
 
@@ -1928,7 +1944,7 @@ errors were encountered.
         # Unless we're running on Windows, in which case, don't colorize
         # unless --colorize is explicitly used, which would cause this whole
         # block to get skipped
-        if ( $cfg->defined(q(mswin32)) ) {
+        if ( $cfg->defined(q(is_mswin32)) ) {
             $cfg->set(q(colorize), 0);
         }
     }
@@ -2001,7 +2017,7 @@ errors were encountered.
     $log->logdie(q(Must specify path directory with --path))
         unless ( $cfg->defined(q(path)) );
 
-    if ( ! $cfg->defined(q(mswin32)) ) {
+    if ( ! $cfg->defined(q(is_mswin32)) ) {
         # For *NIX, append a forward slash on to the directory name so other
         # paths don't need the forward slash later on
         if ( $cfg->get(q(path)) !~ /\/$/ ) {
@@ -2109,7 +2125,7 @@ errors were encountered.
             # checksum;
             # no need to close the filehandle, it will already be 'undef'
             # FIXME *NIX-specific path
-            if ( $cfg->defined(q(mswin32)) ) {
+            if ( $cfg->defined(q(is_mswin32)) ) {
                 $lslar_stat = stat(q(nul));
             } else {
                 $lslar_stat = stat(q(/dev/null));
@@ -2210,6 +2226,7 @@ errors were encountered.
             my $local_file = Local::File->new(
                 opts_path   => $cfg->get(q(path)),
                 archive_obj => $archive_file,
+                is_mswin32  => $cfg->defined(q(is_mswin32)),
             );
             $local_file->stat_local();
             $report->write_record(
