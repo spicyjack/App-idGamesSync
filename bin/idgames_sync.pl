@@ -154,8 +154,8 @@ package idGames::Sync::Config;
 
 use strict;
 use warnings;
+use English qw( -no_match_vars );
 use Pod::Usage; # prints POD docs when --help is called
-
 
 sub new {
     my $class = shift;
@@ -189,7 +189,10 @@ sub new {
         exit 0;
     }
 
-
+    # set a flag if we're running on 'MSWin32'
+    if ( $OSNAME eq q(MSWin32) ) {
+        $self->set(q(mswin32), 1);
+    }
     # return this object to the caller
     return $self;
 }
@@ -1925,7 +1928,7 @@ errors were encountered.
         # Unless we're running on Windows, in which case, don't colorize
         # unless --colorize is explicitly used, which would cause this whole
         # block to get skipped
-        if ( $OSNAME eq q(MSWin32) ) {
+        if ( $cfg->defined(q(mswin32)) ) {
             $cfg->set(q(colorize), 0);
         }
     }
@@ -1960,8 +1963,7 @@ errors were encountered.
     # downloading to an object in memory
     if ( ! $cfg->defined(q(tempdir)) ) {
         if ( defined $ENV{TEMP} ) {
-            # FIXME need to set taint mode, and untaint the environment
-            # variables used below
+            # Windows usually sets %TEMP% as well
             $cfg->set(q(tempdir), $ENV{TEMP});
             $log->debug(q(Using ENV{TEMP} for tempdir));
         } elsif ( defined $ENV{TMP} ) {
@@ -1974,7 +1976,7 @@ errors were encountered.
             $cfg->set(q(tempdir), q(/tmp));
             $log->debug(q(Using '/tmp' for tempdir));
         }
-        $log->debug(q(setting tempdir to: ) . $cfg->get(q(tempdir)));
+        $log->debug(q(Using ) . $cfg->get(q(tempdir)) . q( for tempdir));
     }
     my $lwp = LWP::Wrapper->new(
         base_url        => $cfg->get(q(url)),
@@ -1998,10 +2000,18 @@ errors were encountered.
 
     $log->logdie(q(Must specify path directory with --path))
         unless ( $cfg->defined(q(path)) );
-    # append a forward slash on to the URL so other paths don't need the
-    # forward slash later on
-    if ( $cfg->get(q(path)) !~ /\/$/ ) {
-        $cfg->set(q(path), $cfg->get(q(path)) . q(/));
+
+    if ( ! $cfg->defined(q(mswin32)) ) {
+        # For *NIX, append a forward slash on to the directory name so other
+        # paths don't need the forward slash later on
+        if ( $cfg->get(q(path)) !~ /\/$/ ) {
+            $cfg->set(q(path), $cfg->get(q(path)) . q(/));
+        }
+    } else {
+        # same for Windows, but append a backslash
+        if ( $cfg->get(q(path)) !~ /\\$/ ) {
+            $cfg->set(q(path), $cfg->get(q(path)) . q(\\));
+        }
     }
 
     ### REPORT TYPES
@@ -2082,6 +2092,7 @@ errors were encountered.
         if ( ! defined $dl_lslar_file ) {
             $log->logdie(qq(Error downloading ls-laR.gz file));
         }
+        $log->debug(qq(Received tempfile $dl_lslar_file from fetch method));
         my $dl_lslar_stat = stat($dl_lslar_file);
 
         my $in_fh = IO::File->new(qq(< $lslar_file));
@@ -2098,7 +2109,11 @@ errors were encountered.
             # checksum;
             # no need to close the filehandle, it will already be 'undef'
             # FIXME *NIX-specific path
-            $lslar_stat = stat(q(/dev/null));
+            if ( $cfg->defined(q(mswin32)) ) {
+                $lslar_stat = stat(q(nul));
+            } else {
+                $lslar_stat = stat(q(/dev/null));
+            }
             $md5->add(q(bogus file digest));
         }
         my $local_digest = $md5->hexdigest();
