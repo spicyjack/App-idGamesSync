@@ -11,7 +11,7 @@ idgames_sync.pl - Synchronize a copy of the C<idgames> archive.
 
 =head1 VERSION
 
-Version v0.0.3
+Version v0.0.4
 
 =cut
 
