@@ -27,37 +27,6 @@ Create or update a copy of the C<idgames> archive on the local host.
 
 =cut
 
-# ! = script defaults
-#
-# script reports:
-# ! files in the tarball but missing on disk
-# ! files that have different sizes between the tarball and disk
-# ! files that have the same size in both places
-# - files on disk but not listed in the tarball; note that this mode would
-# require scanning the filesystem at some point in order to compare what's
-# on disk and not in the tarball
-# - all of the above reports
-#
-# output types:
-# - simple - one file per line, with status flags in the left hand side
-# - full - one line per file/directory attribute
-# ! more - filename, date/time, size on one line, file attributes on the next
-# line
-#
-# Objects
-# - Role::Dir::Attribs - local/archive directory attributes
-# - Role::FileDir::Attribs - local/archive file/directory attributes
-# - Role::LocalFileDir - methods and attributes for interacting with local
-# files; exists, local_path
-# - Archive::File - a file in the archive
-# - Archive::Directory - a directory in the archive, can contain one or more
-# file and/or directory objects
-# - Local::File - a file on the filesystem
-# - Local::Directory - a directory on the filesystem, can contain one or more
-# file and/or directory objects
-# - Reporter - writes reports based on the type of report specified by the
-# user
-
 our @options = (
     # help/verbosity options
     q(help|h),
@@ -693,7 +662,7 @@ has notes => (
 
 =over
 
-=item new() (ΒUILD)
+=item new() (BUILD)
 
 Creates an object that has consumed the L<Role::LocalFileDir> role.  This
 object would be used to keep track of attributes of a local file or directory.
