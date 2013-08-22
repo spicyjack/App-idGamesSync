@@ -259,7 +259,7 @@ print <<MOREHELP;
  - same - same size file exists on disk and in the archive
  - all - print all of the above information
 
- The default report type is: "all" (all of the above).
+ The default report type is "all" (all of the above).
 
  Combined report types:
  ----------------------
