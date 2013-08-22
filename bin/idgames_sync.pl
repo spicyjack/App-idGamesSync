@@ -2101,9 +2101,8 @@ errors were encountered.
             # a bogus file for the stat object, and bogus string for the
             # checksum;
             # no need to close the filehandle, it will already be 'undef'
-            # FIXME *NIX-specific path
             if ( $cfg->defined(q(is_mswin32)) ) {
-                $lslar_stat = stat(q(nul));
+                $lslar_stat = stat(q(C:));
             } else {
                 $lslar_stat = stat(q(/dev/null));
             }
