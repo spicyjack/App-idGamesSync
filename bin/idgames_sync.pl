@@ -66,36 +66,24 @@ our @options = (
 
  Help options:
  -h|--help          Displays script options and usage
- -x|--examples      Show examples of script execution
- -m|--morehelp      Show extended help info (format/type specifiers)
+ -v|--verbose       Sets logging level to INFO, more verbose output
 
- Verbosity/debugging options:
- -v|--verbose       Sets logging level to INFO, verbose output
- -d|--debug         Sets logging level to DEBUG, tons of output
- --debug-noexit     Don't exit if --debug is set (ignores --debug-files)
- --debug-files      Sync this many files before exiting (default: 50)
-                    Requires '--debug'
- Script options:
+ Required script options:
+ -p|--path          Path to the local copy of the idgames archive
+
+ Useful script options:
  -n|--dry-run       Don't sync content, explain script actions instead
- -e|--exclude       Don't use these mirror URL(s) for syncing
- -p|--path          Path to sync the idgames archive to
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
-
- Logging options:
- --colorize         Always colorize log output (for piping log output)
-
- Misc. options:
- --show-mirrors     Show the current set of mirrors then exit
- --dotfiles         Show "hidden" files, Example: .message/.listing
- --headers          Show directory headers and blocks used in output
- --incoming         Show files located in the /incoming directory
- --tempdir          Temporary directory to use when downloading files
- --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+ --create-mirror    Authorize script to create a new copy of the mirror
  --skip-ls-lar      Don't fetch 'ls-laR.gz' (after using '--update-ls-lar')
- --size-local       Combination of '--type size --type local'
- --size-same        Combination of '--type size --type same'
+ --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
+
+ Run with '--examples' switch to see script example usage
+
+ Run with '--morehelp' for more script options, and descriptions of the
+ '--format' and '--type' options
 
 =head1 DESCRIPTION
 
@@ -228,6 +216,29 @@ sub show_morehelp {
 
 print <<MOREHELP;
 
+ Misc. script options:
+ ---------------------
+ -x|--examples      Show examples of script execution
+ -m|--morehelp      Show extended help info (format/type specifiers)
+ -e|--exclude       Don't use these mirror URL(s) for syncing
+ --dotfiles         Show "hidden" files, Example: .message/.listing
+ --headers          Show directory headers and blocks used in output
+ --incoming         Show files located in the /incoming directory
+ --show-mirrors     Show the current set of mirrors then exit
+ --size-local       Combination of '--type size --type local'
+ --size-same        Combination of '--type size --type same'
+ --tempdir          Temporary directory to use when downloading files
+
+ Script debugging options:
+ -------------------------
+ -d|--debug         Sets logging level to DEBUG, tons of output
+ --debug-noexit     Don't exit if --debug is set (ignores --debug-files)
+ --debug-files      Sync this many files before exiting (default: 50)
+                    Requires '--debug'
+ --colorize         Always colorize log output (when piping log output)
+
+ Notes about script behaivor:
+ ----------------------------
  By default, the script will query a random mirror for each file that needs to
  be synchronized unless the --url switch is used to specify a specific mirror.
 
@@ -238,21 +249,28 @@ print <<MOREHELP;
  only generate errors.
 
  Report Types (for use with the --type switch):
+ ----------------------------------------------
+ Use these report types with the '--type' flag; note '--type' can be specified
+ multiple times.
  - headers - print directory headers and directory block sizes
  - local - files in the archive that are missing on local disk
  - archive - files on the local disk not listed in the archive
  - size - size differences between the local file and archive file
  - same - same size file exists on disk and in the archive
  - all - print all of the above information
- The default report type is: _all of the above_.
+ The default report type is: "all" (all of the above).
 
  Combined report types:
+ ----------------------
+ Use these combined report types instead of specifying '--type' multiple
+ times.
  --size-local   (size + local) Show file size mismatches, and files missing on
                 local system
  --size-same    (size + same) Show all files, both valid files and size
                 mismatched files
 
  Output formats (for use with the --format switch):
+ --------------------------------------------------
  - full     One line per file/directory attribute
  - more     Shows filename, date/time, size on one line, file attributes on
             the next line
