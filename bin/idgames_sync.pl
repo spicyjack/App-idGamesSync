@@ -2165,7 +2165,7 @@ errors were encountered.
         $log->logdie(qq(Exiting script...));
     }
 
-    ### UPDATE LS-LAR.GZ
+    ### UPDATE ls-laR.gz ###
     if ( ! $cfg->defined(q(dry-run)) && ! $cfg->defined(q(skip-ls-lar)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
@@ -2247,8 +2247,8 @@ errors were encountered.
     }
     $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
 
-    # parse the ls-laR.gz file
-    my $counter = 0;
+    ### PARSE ls-laR.gz FILE ###
+    my $debug_counter = 0;
     my $current_dir;
     IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
@@ -2405,14 +2405,14 @@ errors were encountered.
         } else {
             $log->warn(qq(Unknown line found in input data; >$line<));
         }
-        $counter++;
+        $debug_counter++;
         if ( $log->is_debug() ) {
             # don't worry about counters or constants if --debug-noexit was
             # used
             next IDGAMES_LINE if ( $cfg->defined(q(debug-noexit)) );
             # check to see if --debug-files was used
             if ( $cfg->defined(q(debug-files)) ) {
-                if ( $counter > $cfg->get(q(debug-files)) ) {
+                if ( $debug_counter > $cfg->get(q(debug-files)) ) {
                     $log->debug(q|reached | . $cfg->get(q(debug-files))
                         . q( files));
                     $log->debug(q(Exiting script early due to --debug flag));
@@ -2420,7 +2420,7 @@ errors were encountered.
                 }
             } else {
                 # go with the constant 'DEBUG_LOOPS'
-                if ( $counter == DEBUG_LOOPS ) {
+                if ( $debug_counter == DEBUG_LOOPS ) {
                     $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS
                         . q|) reached...|);
                     $log->debug(q(Exiting script early due to --debug flag));
