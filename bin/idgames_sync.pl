@@ -162,6 +162,7 @@ Show examples of script usage.
 
 sub show_examples {
 
+
 print <<"EXAMPLES";
 
  Basic Usage Examples:
@@ -1902,16 +1903,10 @@ errors were encountered.
 
     # force writes in output to STDOUT
     $| = 1;
+
+    # creating a Config object will check for things like '--help',
+    # '--examples', and '--morehelp'
     my $cfg = idGames::Sync::Config->new();
-
-    if ( defined $cfg->get(q(help)) ) {
-        pod2usage( { -verbose => 1, -exitval => 0, -input => __FILE__ } );
-    }
-
-    if ( defined $cfg->get(q(examples)) ) {
-        show_examples();
-        exit 0;
-    }
 
     # parent directory
     my $parent = q();
