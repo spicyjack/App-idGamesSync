@@ -80,7 +80,7 @@ our @options = (
  --skip-ls-lar      Don't fetch 'ls-laR.gz' (after using '--update-ls-lar')
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
 
- Run with '--examples' switch to see script example usage
+ Run with '--examples' switch to see examples of script usage
 
  Run with '--morehelp' for more script options, and descriptions of the
  '--format' and '--type' options
