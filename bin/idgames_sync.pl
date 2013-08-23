@@ -1447,7 +1447,7 @@ has q(url_regex) => (
     is      => q(ro),
     isa     => q(RegexpRef),
     # $1 = scheme, $2 = host, $3 is path
-    default => sub {qr!^(ftp|http|https){1}://([\w.-]+)/(.*)$!;}
+    default => sub {qr!^(ftp|http|https){1}://([\w.-]+)/??(.*)*$!;}
 );
 
 =item tempdir
