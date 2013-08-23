@@ -132,7 +132,15 @@ sub new {
     $self->{_args} = \%args;
 
     # dump and bail if we get called with --help
-    if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 1); }
+    if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 0); }
+
+    # set a flag if we're running on 'MSWin32'
+    # this needs to be set before possibly showing examples because examples
+    # will show differently on Windows than it does on *NIX (different paths
+    # and prefixes)
+    if ( $OSNAME eq q(MSWin32) ) {
+        $self->set(q(is_mswin32), 1);
+    }
 
     # dump and bail if we get called with --examples
     if ( $self->get(q(examples)) ) {
@@ -146,10 +154,7 @@ sub new {
         exit 0;
     }
 
-    # set a flag if we're running on 'MSWin32'
-    if ( $OSNAME eq q(MSWin32) ) {
-        $self->set(q(is_mswin32), 1);
-    }
+
     # return this object to the caller
     return $self;
 }
@@ -161,49 +166,60 @@ Show examples of script usage.
 =cut
 
 sub show_examples {
+    my $self = shift;
 
 
-print <<"EXAMPLES";
+    ### WINDOWS EXAMPLES ###
+    if ( $self->defined(q(is_mswin32)) ) {
 
- Basic Usage Examples:
+        print <<"WIN_EXAMPLES";
 
+WIN_EXAMPLES
+
+    } else {
+        print <<"NIX_EXAMPLES";
+
+ =-=-= $our_name USAGE EXAMPLES =-=-=
+
+ Create a mirror:
+ ----------------
+ $our_name --path /path/to/your/idgames/dir --create-mirror
+
+ # Use the 'simple' output format
+ $our_name --path /path/to/your/idgames/dir --create-mirror \
+   --format=simple
+
+ Synchronize existing mirrors:
+ -----------------------------
  $our_name --path /path/to/your/idgames/dir
 
- # use a different format
+ # Use 'simple' output format; default format is 'more'
  $our_name --path /path/to/your/idgames/dir --format simple
 
- # use the "show what needs to be updated" shortcut (--size-local)
- $our_name --path /path/to/your/idgames/dir --format simple \
-   --size-local --dry-run
+ # Update the 'ls-laR.gz' archive listing, then use '--dry-run' to see what
+ # will be updated; use 'simple' output format
+ $our_name --path /path/to/your/idgames/dir --update-lslar
+ $our_name --path /path/to/your/idgames/dir --format simple --dry-run
 
  More Complex Usage Examples:
-
- # use a specific mirror, the 'more' output format
- $our_name --url http://example.com --format more \
-    --path /path/to/your/idgames/dir
-
- # specific mirror, 'simple' output format, show missing local files
- # and files that are different sizes between local and the mirror
+ ----------------------------
+ # specific mirror, 'simple' output format, show all files being mirrored
  $our_name --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --type size --type local
+    --url http://example.com --format simple --type all
 
- # same as above, with shortcut options
+ # use random mirrors, exclude a specific mirror, 'simple' output format
  $our_name --path /path/to/your/idgames/dir \
-    --url http://example.com --format simple --size-local
-
- # use random mirrors, exclude a specific mirror
- $our_name --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
-    --size-local --format more
+    --exclude http://some-mirror-server.example.com --format simple
 
  # use random mirrors, exclude a specific mirror,
- # specify temporary directory
+ # specify temporary directory, 'full' output format
  $our_name --path /path/to/your/idgames/dir \
     --exclude http://some-mirror-server.example.com \
-    --size-local --format more --tempdir /path/to/temp/dir
+    --format full --tempdir /path/to/temp/dir
 
-EXAMPLES
+NIX_EXAMPLES
 
+    }
 }
 
 =item show_morehelp
@@ -226,7 +242,7 @@ print <<MOREHELP;
  --headers          Show directory headers and blocks used in output
  --incoming         Show files located in the /incoming directory
  --show-mirrors     Show the current set of mirrors then exit
- --size-local       Combination of '--type size --type local'
+ --size-local       Combination of '--type size --type local' (default)
  --size-same        Combination of '--type size --type same'
  --tempdir          Temporary directory to use when downloading files
 
@@ -253,21 +269,21 @@ print <<MOREHELP;
  ----------------------------------------------
  Use these report types with the '--type' flag; note '--type' can be specified
  multiple times.
- - headers - print directory headers and directory block sizes
- - local - files in the archive that are missing on local disk
- - archive - files on the local disk not listed in the archive
- - size - size differences between the local file and archive file
- - same - same size file exists on disk and in the archive
- - all - print all of the above information
+ - headers  - Print directory headers and directory block sizes
+ - local    - Files in the archive that are missing on local disk
+ - archive  - Files on the local disk not listed in the archive
+ - size     - Size differences between the local file and archive file
+ - same     - Same size file exists on disk and in the archive
+ - all      - Print all of the above information
 
- The default report type is "all" (all of the above).
+ The default report type is "size + local" (same as '--size-local' below).
 
  Combined report types:
  ----------------------
  Use these combined report types instead of specifying '--type' multiple
  times.
  --size-local   (size + local) Show file size mismatches, and files missing on
-                local system
+                local system; this is the default report type
  --size-same    (size + same) Show all files, both valid files and size
                 mismatched files
 
