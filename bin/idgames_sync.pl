@@ -1972,9 +1972,11 @@ use constant {
 };
 
 ### script variables
+# FIXME GitHub issue #58 filed, default and allowed report types and formats
+# should live in the Reporter object
 my $allowed_report_types = q(headers:local:archive:size:same);
-my $report_types = q(local:size);
-my $report_format = q(more);
+my $default_report_types = q(local:size);
+my $default_report_format = q(more);
 
 =head1 DESCRIPTION
 
@@ -2105,6 +2107,9 @@ errors were encountered.
 
     ### REPORT TYPES
     # the default report type is now size-local
+    # FIXME GitHub issue #58 filed, default report types should live in the
+    # Reporter object
+    my $report_types = $default_report_types;
     if ( $cfg->defined(q(size-same)) ) {
         $report_types = q(size:same);
     }
@@ -2124,6 +2129,9 @@ errors were encountered.
 
 
     ### REPORT FORMATS
+    # FIXME GitHub issue #58 filed, default report format should live in the
+    # Reporter object
+    my $report_format = $default_report_format;
     if ( $cfg->defined(q(format)) ) {
         $report_format = $cfg->get(q(format));
     }
