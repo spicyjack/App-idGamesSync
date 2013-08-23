@@ -174,6 +174,54 @@ sub show_examples {
 
         print <<"WIN_EXAMPLES";
 
+ =-=-= $our_name USAGE EXAMPLES =-=-=
+
+ Create a mirror:
+ ----------------
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --create-mirror
+
+ # Use the 'simple' output format
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --create-mirror \
+   --format=simple
+
+ Synchronize existing mirror:
+ ----------------------------
+ $our_name --path C:\\path\\to\\your\\idgames\\dir
+
+ # Use 'simple' output format; default format is 'more'
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --format simple
+
+ "Dry-Run", or test what would be downloaded/synchronized
+ --------------------------------------------------------
+ # Update the 'ls-laR.gz' archive listing, then use '--dry-run' to see what
+ # will be updated; use 'simple' output format
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --update-lslar
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --format simple --dry-run
+
+ More Complex Usage Examples:
+ ----------------------------
+ # specific mirror, 'simple' output format, show all files being mirrored
+ $our_name --path C:\\path\\to\\your\\idgames\\dir \
+    --url http://example.com --format simple --type all
+
+ # use random mirrors, exclude a specific mirror, 'simple' output format
+ $our_name --path C:\\path\\to\\your\\idgames\\dir \
+    --exclude http://some-mirror-server.example.com --format simple
+
+ # use random mirrors, exclude a specific mirror,
+ # specify temporary directory, 'full' output format
+ $our_name --path C:\\path\\to\\your\\idgames\\dir \
+    --exclude http://some-mirror-server.example.com \
+    --format full --tempdir C:\\path\\to\\temp\\dir
+
+ # 'simple' output format, try to synchronize the '/incoming' directory
+ # NOTE: this will cause download failures, please see '--morehelp' for a
+ # longer explanation
+ $our_name --path C:\\path\\to\\your\\idgames\\dir --incoming
+
+ # Show the list of mirror servers embedded into this script, then exit
+ $our_name --show-mirrors
+
 WIN_EXAMPLES
 
     } else {
@@ -189,13 +237,15 @@ WIN_EXAMPLES
  $our_name --path /path/to/your/idgames/dir --create-mirror \
    --format=simple
 
- Synchronize existing mirrors:
- -----------------------------
+ Synchronize existing mirror:
+ ----------------------------
  $our_name --path /path/to/your/idgames/dir
 
  # Use 'simple' output format; default format is 'more'
  $our_name --path /path/to/your/idgames/dir --format simple
 
+ "Dry-Run", or test what would be downloaded/synchronized
+ --------------------------------------------------------
  # Update the 'ls-laR.gz' archive listing, then use '--dry-run' to see what
  # will be updated; use 'simple' output format
  $our_name --path /path/to/your/idgames/dir --update-lslar
@@ -217,6 +267,14 @@ WIN_EXAMPLES
     --exclude http://some-mirror-server.example.com \
     --format full --tempdir /path/to/temp/dir
 
+ # 'simple' output format, try to synchronize the '/incoming' directory
+ # NOTE: this will cause download failures, please see '--morehelp' for a
+ # longer explanation
+ $our_name --path /path/to/your/idgames/dir --incoming
+
+ # Show the list of mirror servers embedded into this script, then exit
+ $our_name --show-mirrors
+
 NIX_EXAMPLES
 
     }
@@ -232,6 +290,8 @@ functions.
 sub show_morehelp {
 
 print <<MOREHELP;
+
+ =-=-= $our_name - More Help Screen =-=-=
 
  Misc. script options:
  ---------------------
