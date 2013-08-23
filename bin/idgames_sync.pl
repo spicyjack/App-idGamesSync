@@ -626,8 +626,13 @@ use constant {
     DIFF_SIZE   => q(S),
 };
 
+# files that are usually "hidden" on *NIX systems, which in this case are used
+# for meta information by the webserver
 my @_dotfiles = qw( .message .DS_Store .mirror_log .listing );
+# files that should usually be downloaded from the master mirror, unless --url
+# is used, in which case, all files should be downloaded from that mirror
 my $_metafiles = qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS/;
+my @_wad_dirs;
 
 =head3 Attributes
 
@@ -646,7 +651,7 @@ has opts_path => (
 
 =item archive_obj
 
-The Archive object that his object is based off of.
+The Archive object that this object is based off of.
 
 =cut
 
@@ -657,7 +662,7 @@ has archive_obj => (
 
 =item absolute_path
 
-The absolute path to this file or directory, from the filesystem root.
+The absolute path to this file or directory, from the drive/filesystem root.
 
 =cut
 
@@ -682,7 +687,6 @@ has is_mswin32 => (
 The short path to the file, made up of the filename, and any parent
 directories above the file's directory.
 
-
 =cut
 
 has short_path => (
@@ -703,9 +707,23 @@ has short_type => (
     default => q(),
 );
 
+=item short_status
+
+A single character that shows the file's status on the local system, whether
+the file is present or not, or if the size of the file on the local system
+does not match the size of the file in the archive.
+
+=cut
+
+has short_status => (
+    is      => q(rw),
+    isa     => q(Str),
+    default => q(),
+);
+
 =item long_status
 
-A longer description than C<short_type> above.
+A short summary of the file's status, used in more verbose reports.
 
 =cut
 
@@ -715,18 +733,6 @@ has long_status => (
     default => q(),
 );
 
-=item short_status
-
-A single character that shows the file's status in relation to what's listed
-in the archive.
-
-=cut
-
-has short_status => (
-    is      => q(rw),
-    isa     => q(Str),
-    default => q(),
-);
 
 =item needs_sync
 
