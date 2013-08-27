@@ -685,7 +685,9 @@ has is_mswin32 => (
 =item short_path
 
 The short path to the file, made up of the filename, and any parent
-directories above the file's directory.
+directories above the file's directory.  Note that the path separatator will
+change depending on what platform this script is run on (C</> for *NIX, C<\>
+for Windows).
 
 =cut
 
@@ -733,6 +735,19 @@ has long_status => (
     default => q(),
 );
 
+=item url_path
+
+The path that can be used to build a valid URL to the resource on any
+C<idgames> mirror server.  This path always has forward slashes, as opposed to
+C<short_path>, which has slashes based on what platform the script is
+currently running on.
+
+=cut
+
+has url_path => (
+    is      => q(rw),
+    isa     => q(Str),
+);
 
 =item needs_sync
 
@@ -814,9 +829,15 @@ sub BUILD {
     $self->parent_path($parent_dir);
     #$log->debug(qq(Parent path is: ) . $self->parent_path);
     if ( length($self->parent_path) > 0 ) {
-        $self->short_path($self->parent_path . q(/) . $self->name);
+        $self->url_path($self->parent_path . q(/) . $self->name);
+        if ( $self->is_mswin32 ) {
+            $self->short_path($self->parent_path . q(\\) . $self->name);
+        } else {
+            $self->short_path($self->url_path);
+        }
     } else {
         $self->short_path($self->name);
+        $self->url_path($self->name);
     }
     #$log->debug(qq(Short path is: ) . $self->short_path);
 
@@ -924,16 +945,16 @@ sub sync {
         # /newstuff directory; if so, sync it from the master mirror, as the
         # other mirrors may not be in sync and have the file
         my $temp_file;
-        if ( $self->short_path =~ /$_metafiles/
+        if ( $self->url_path =~ /$_metafiles/
                 || $self->parent_path =~ /newstuff/ ) {
             $log->debug(q(Syncing "meta" file from master mirror));
             $temp_file = $lwp->fetch(
                 base_url => $lwp->master_mirror,
-                filepath => $self->short_path
+                filepath => $self->url_path
             );
         } else {
             # use a random mirror
-            $temp_file = $lwp->fetch( filepath => $self->short_path );
+            $temp_file = $lwp->fetch( filepath => $self->url_path );
         }
         if ( defined $temp_file ) {
             print qq(- Writing file: ) . $self->absolute_path . qq(\n);
