@@ -493,6 +493,9 @@ package Role::FileDir::Attribs;
 
 use Mouse::Role;
 
+
+my @_wad_dirs;
+
 =head3 Attributes
 
 =over
@@ -595,6 +598,116 @@ has parent_path      => (
     isa     => q(Str),
 );
 
+=item dotfiles
+
+A regular expression reference of filenames that match "dotfiles" or files
+that are meant to be hidden on *NIX platforms.  These files are usually used
+to store text messages that are displayed in FTP/HTTP directory listings.
+
+=back
+
+=cut
+
+has dotfiles      => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    default => sub {qr/\.message|\.DS_Store|\.mirror_log|\.listing/;}
+);
+
+=item is_dotfile
+
+Tests to see if the current file/directory is a "dotfile", or a file that is
+usually hidden on *NIX systems.  You usually don't care about these files,
+unless you are building an exact replica of the mirror server.  Returns C<0>
+false if the current object is not a dotfile, or C<1> true if the current
+object I<is> a dotfile.
+
+=cut
+
+sub is_dotfile {
+    my $self = shift;
+
+    if ( $self->name =~ /$self->dotfiles/ ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+=item metafiles
+
+A regular expression that describes a set of files ("metadata files") that
+should usually be downloaded from the master mirror, unless C<--url>
+is used, in which case, these files will be downloaded from the mirror server
+specified with C<--url>.
+
+=back
+
+=cut
+
+has metafiles     => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    default => sub {qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS/;},
+);
+
+=item is_metafile
+
+Tests to see if the current file/directory is a "metafile", or a
+meta-information file.  Returns C<0> false if the current object is not a
+dotfile, or C<1> true if the current object I<is> a dotfile.
+
+=cut
+
+sub is_metafile {
+    my $self = shift;
+
+    if ( $self->name =~ /$self->metafiles/ ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+=item wad_dirs
+
+A regular expression that describes directories where C<WAD> files are stored
+inside of the C<idgames> Mirror.
+
+=back
+
+=cut
+
+has wad_dirs      => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    default => sub {
+        # build the regex that covers all levels directories
+        my $levels = q(/combos|/deathmatch|);
+        $levels .= q(/levels/[doom|doom2|hacx|heretic|hexen|strife]);
+        return qx/$levels/;
+    },
+);
+
+=item is_wad_dir
+
+Tests to see if the current directory is in a "WAD directory", or a directory
+known to have C<WAD> files inside of it.  Returns C<0> false if the directory
+is not a C<WAD> directory, or C<1> true if the directory does have C<WAD>
+files inside of it.
+
+=cut
+
+sub is_wad_dir {
+    my $self = shift;
+
+    if ( $self->name =~ /$self->wad_dirs/ ) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 =head2 Role::LocalFileDir
 
 Methods and attributes used for interacting with a file or directory on the
@@ -626,13 +739,6 @@ use constant {
     DIFF_SIZE   => q(S),
 };
 
-# files that are usually "hidden" on *NIX systems, which in this case are used
-# for meta information by the webserver
-my @_dotfiles = qw( .message .DS_Store .mirror_log .listing );
-# files that should usually be downloaded from the master mirror, unless --url
-# is used, in which case, all files should be downloaded from that mirror
-my $_metafiles = qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS/;
-my @_wad_dirs;
 
 =head3 Attributes
 
@@ -945,7 +1051,7 @@ sub sync {
         # /newstuff directory; if so, sync it from the master mirror, as the
         # other mirrors may not be in sync and have the file
         my $temp_file;
-        if ( $self->url_path =~ /$_metafiles/
+        if ( $self->url_path =~ /$self->metafiles/
                 || $self->parent_path =~ /newstuff/ ) {
             $log->debug(q(Syncing "meta" file from master mirror));
             $temp_file = $lwp->fetch(
@@ -1001,24 +1107,6 @@ sub exists {
     } else {
         return undef;
     }
-}
-
-=item is_dotfile
-
-Tests to see if the current file/directory is a "dotfile", or a file that is
-usually hidden on *NIX systems.  You usually don't care about these files,
-unless you are building an exact replica of the mirror server.  Returns C<0>
-false if the current object is not a dotfile, or C<1> true if the current
-object I<is> a dotfile.
-
-=cut
-
-sub is_dotfile {
-    my $self = shift;
-
-    my $checkname = $self->name;
-    # return the number of matches, 0 or 1
-    return scalar(grep(/$checkname/, @_dotfiles));
 }
 
 =item append_notes
