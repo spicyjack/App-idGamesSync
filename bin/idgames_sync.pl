@@ -47,6 +47,7 @@ our @options = (
     q(colorize!), # always colorize logs, no matter if a pipe is present or not
     q(loglevel|log|level|ll=s),
     # misc options
+    q(sync-all), # sync everything, not just WADs
     q(show-mirrors), # show the mirrors array and exit
     q(create-mirror), # create a new mirror if ls-laR.gz not found at --path
     q(incoming), # show files in the /incoming directory
@@ -77,6 +78,7 @@ our @options = (
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
  --create-mirror    Authorize script to create a new copy of the mirror
+ --sync-all         Synchronize everything, not just WAD directories
  --skip-ls-lar      Don't fetch 'ls-laR.gz' (after using '--update-ls-lar')
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
 
@@ -178,46 +180,59 @@ sub show_examples {
 
  Create a mirror:
  ----------------
- $our_name --path C:\\path\\to\\your\\idgames\\dir --create-mirror
+ $our_name --path C:\\path\\to\\idgames\\dir --create-mirror
 
  # Use the 'simple' output format
- $our_name --path C:\\path\\to\\your\\idgames\\dir --create-mirror \
+ $our_name --path C:\\path\\to\\idgames\\dir --create-mirror \\
    --format=simple
+
+ # Use the 'simple' output format, synchronize everything
+ $our_name --path C:\\path\\to\\idgames\\dir --create-mirror \\
+   --format=simple --sync-all
 
  Synchronize existing mirror:
  ----------------------------
- $our_name --path C:\\path\\to\\your\\idgames\\dir
+ $our_name --path C:\\path\\to\\idgames\\dir
 
  # Use 'simple' output format; default format is 'more'
- $our_name --path C:\\path\\to\\your\\idgames\\dir --format simple
+ $our_name --path C:\\path\\to\\idgames\\dir --format simple
+
+ # Use 'simple' output format, synchronize everything
+ $our_name --path C:\\path\\to\\idgames\\dir --format simple --sync-all
 
  "Dry-Run", or test what would be downloaded/synchronized
  --------------------------------------------------------
- # Update the 'ls-laR.gz' archive listing, then use '--dry-run' to see what
- # will be updated; use 'simple' output format
- $our_name --path C:\\path\\to\\your\\idgames\\dir --update-lslar
- $our_name --path C:\\path\\to\\your\\idgames\\dir --format simple --dry-run
+ # Update the 'ls-laR.gz' archive listing
+ $our_name --path C:\\path\\to\\idgames\\dir --update-lslar
+
+ # Then use '--dry-run' to see what will be updated; use 'simple' output
+ # format
+ $our_name --path C:\\path\\to\\idgames\\dir --format simple --dry-run
+
+ # Same thing, but synchronize everything instead of just WADs
+ $our_name --path C:\\path\\to\\idgames\\dir --format simple \\
+   --dry-run --sync-all
 
  More Complex Usage Examples:
  ----------------------------
  # specific mirror, 'simple' output format, show all files being mirrored
- $our_name --path C:\\path\\to\\your\\idgames\\dir \
+ $our_name --path C:\\path\\to\\idgames\\dir \\
     --url http://example.com --format simple --type all
 
  # use random mirrors, exclude a specific mirror, 'simple' output format
- $our_name --path C:\\path\\to\\your\\idgames\\dir \
-    --exclude http://some-mirror-server.example.com --format simple
+ $our_name --path C:\\path\\to\\idgames\\dir --format simple \\
+    --exclude http://some-mirror-server.example.com
 
  # use random mirrors, exclude a specific mirror,
  # specify temporary directory, 'full' output format
- $our_name --path C:\\path\\to\\your\\idgames\\dir \
-    --exclude http://some-mirror-server.example.com \
+ $our_name --path C:\\path\\to\\idgames\\dir \\
+    --exclude http://some-mirror-server.example.com \\
     --format full --tempdir C:\\path\\to\\temp\\dir
 
  # 'simple' output format, try to synchronize the '/incoming' directory
  # NOTE: this will cause download failures, please see '--morehelp' for a
  # longer explanation
- $our_name --path C:\\path\\to\\your\\idgames\\dir --incoming
+ $our_name --path C:\\path\\to\\idgames\\dir --incoming
 
  # Show the list of mirror servers embedded into this script, then exit
  $our_name --show-mirrors
@@ -234,8 +249,12 @@ WIN_EXAMPLES
  $our_name --path /path/to/your/idgames/dir --create-mirror
 
  # Use the 'simple' output format
- $our_name --path /path/to/your/idgames/dir --create-mirror \
+ $our_name --path /path/to/your/idgames/dir --create-mirror \\
    --format=simple
+
+ # Use the 'simple' output format, synchronize everything
+ $our_name --path /path/to/your/idgames/dir --create-mirror \\
+   --format=simple --sync-all
 
  Synchronize existing mirror:
  ----------------------------
@@ -244,27 +263,36 @@ WIN_EXAMPLES
  # Use 'simple' output format; default format is 'more'
  $our_name --path /path/to/your/idgames/dir --format simple
 
+ # Use 'simple' output format, synchronize everything
+ $our_name --path /path/to/your/idgames/dir --format simple --sync-all
+
  "Dry-Run", or test what would be downloaded/synchronized
  --------------------------------------------------------
- # Update the 'ls-laR.gz' archive listing, then use '--dry-run' to see what
- # will be updated; use 'simple' output format
+ # Update the 'ls-laR.gz' archive listing
  $our_name --path /path/to/your/idgames/dir --update-lslar
+
+ # Then use '--dry-run' to see what will be updated;
+ # use 'simple' output format
  $our_name --path /path/to/your/idgames/dir --format simple --dry-run
+
+ # Same thing, but synchronize everything instead of just WADs
+ $our_name --path /path/to/your/idgames/dir --format simple \\
+   --dry-run --sync-all
 
  More Complex Usage Examples:
  ----------------------------
  # specific mirror, 'simple' output format, show all files being mirrored
- $our_name --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \\
     --url http://example.com --format simple --type all
 
  # use random mirrors, exclude a specific mirror, 'simple' output format
- $our_name --path /path/to/your/idgames/dir \
+ $our_name --path /path/to/your/idgames/dir \\
     --exclude http://some-mirror-server.example.com --format simple
 
  # use random mirrors, exclude a specific mirror,
  # specify temporary directory, 'full' output format
- $our_name --path /path/to/your/idgames/dir \
-    --exclude http://some-mirror-server.example.com \
+ $our_name --path /path/to/your/idgames/dir \\
+    --exclude http://some-mirror-server.example.com \\
     --format full --tempdir /path/to/temp/dir
 
  # 'simple' output format, try to synchronize the '/incoming' directory
