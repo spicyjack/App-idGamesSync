@@ -521,9 +521,6 @@ package Role::FileDir::Attribs;
 
 use Mouse::Role;
 
-
-my @_wad_dirs;
-
 =head3 Attributes
 
 =over
@@ -654,10 +651,17 @@ object I<is> a dotfile.
 
 sub is_dotfile {
     my $self = shift;
+    my $dotfiles_regex = $self->dotfiles;
 
-    if ( $self->name =~ /$self->dotfiles/ ) {
+    #my $log = Log::Log4perl->get_logger();
+    #$log->debug(qq(Checking: ) . $self->name);
+    #$log->debug(qq(With regex: $dotfiles_regex));
+
+    if ( $self->name =~ /$dotfiles_regex/ ) {
+        #$log->debug($self->name . qq( is a dotfile));
         return 1;
     } else {
+        #$log->debug($self->name . qq( is *NOT* a dotfile));
         return 0;
     }
 }
@@ -689,10 +693,17 @@ dotfile, or C<1> true if the current object I<is> a dotfile.
 
 sub is_metafile {
     my $self = shift;
+    my $metafiles_regex = $self->metafiles;
 
-    if ( $self->name =~ /$self->metafiles/ ) {
+    #my $log = Log::Log4perl->get_logger();
+    #$log->debug(qq(Checking: ) . $self->name);
+    $log->debug(qq(With regex: $metafiles_regex));
+
+    if ( $self->name =~ /$metafiles_regex/ ) {
+        #$log->debug($self->name . qq( is a metafile));
         return 1;
     } else {
+        #$log->debug($self->name . qq( is *NOT* a metafile));
         return 0;
     }
 }
@@ -710,10 +721,14 @@ has wad_dirs      => (
     is      => q(ro),
     isa     => q(RegexpRef),
     default => sub {
-        # build the regex that covers all levels directories
+        # regex that covers all "non-WAD" directories
+        #my $levels = q(/docs|/graphics|/history|/idstuff|/lmps|/misc|/music);
+        #$levels .= q(|/prefabs|/roguestuff|/skins|/sounds|/source);
+        #$levels .= q(|/themes|/utils);
+        # regex that covers all levels directories
         my $levels = q(/combos|/deathmatch|);
         $levels .= q(/levels/[doom|doom2|hacx|heretic|hexen|strife]);
-        return qx/$levels/;
+        return qr/$levels/;
     },
 );
 
@@ -728,10 +743,17 @@ files inside of it.
 
 sub is_wad_dir {
     my $self = shift;
+    my $wad_dirs_regex = $self->wad_dirs;
 
-    if ( $self->name =~ /$self->wad_dirs/ ) {
+    my $log = Log::Log4perl->get_logger();
+    #$log->debug(qq(Checking: ) . $self->name);
+    #$log->debug(qq(With regex: $wad_dirs_regex));
+
+    if ( $self->name =~ /$wad_dirs_regex/ ) {
+        #$log->debug($self->name . qq(is a WAD dir));
         return 1;
     } else {
+        #$log->debug($self->name . qq(is *NOT* a WAD dir));
         return 0;
     }
 }
@@ -1002,7 +1024,6 @@ sub stat_local {
         $self->long_status(q(Missing locally));
         $self->append_notes(qq(Missing on local system));
         $self->needs_sync(1);
-
     } else {
         my $lsperms = File::Stat::Ls->new();
         $self->perms($lsperms->format_mode($stat->mode) );
@@ -1439,6 +1460,7 @@ sub write_record {
     }
     # skip dotfiles?
     if ( $l->is_dotfile == 1 && ! $self->show_dotfiles ) {
+        $log->debug(q(Found dotfile, but --dotfiles not set, not displaying));
         $write_flag = 0;
     }
     return undef unless ( $write_flag );
@@ -2451,10 +2473,16 @@ errors were encountered.
                 local_obj      => $local_file,
             );
             if ( $local_file->needs_sync ) {
-                # skip dotfiles unless --dotfiles was used
+                # skip syncing dotfiles unless --dotfiles was used
                 if ($local_file->is_dotfile && ! $cfg->get(q(dotfiles))) {
-                    $log->debug(q(dotfile needs sync, but --dotfiles not used));
+                    $log->debug(q(dotfile needs sync, missing --dotfiles));
                     next IDGAMES_LINE;
+                }
+                # skip syncing non-WAD files/metafiles unless --sync-all was
+                # used
+                if (! ($local_file->is_wad_dir || $local_file->is_metafile)
+                    && ! $cfg->defined(q(sync-all))){
+                    $log->debug(q(Non-WAD file needs sync, missing --sync-all));
                 }
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
