@@ -697,7 +697,7 @@ sub is_metafile {
 
     #my $log = Log::Log4perl->get_logger();
     #$log->debug(qq(Checking: ) . $self->name);
-    $log->debug(qq(With regex: $metafiles_regex));
+    #$log->debug(qq(With regex: $metafiles_regex));
 
     if ( $self->name =~ /$metafiles_regex/ ) {
         #$log->debug($self->name . qq( is a metafile));
