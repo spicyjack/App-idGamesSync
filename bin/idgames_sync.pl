@@ -680,7 +680,8 @@ specified with C<--url>.
 has metafiles     => (
     is      => q(ro),
     isa     => q(RegexpRef),
-    default => sub {qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS/;},
+    default => sub {
+        qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS|README\.*/;},
 );
 
 =item is_metafile
@@ -726,8 +727,8 @@ has wad_dirs      => (
         #$levels .= q(|/prefabs|/roguestuff|/skins|/sounds|/source);
         #$levels .= q(|/themes|/utils);
         # regex that covers all levels directories
-        my $levels = q(/combos|/deathmatch|);
-        $levels .= q(/levels/[doom|doom2|hacx|heretic|hexen|strife]);
+        my $levels = q(^combos|^deathmatch);
+        $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
         return qr/$levels/;
     },
 );
@@ -745,15 +746,15 @@ sub is_wad_dir {
     my $self = shift;
     my $wad_dirs_regex = $self->wad_dirs;
 
-    my $log = Log::Log4perl->get_logger();
-    #$log->debug(qq(Checking: ) . $self->name);
+    #my $log = Log::Log4perl->get_logger();
+    #$log->debug(qq(Checking: ) . $self->short_path);
     #$log->debug(qq(With regex: $wad_dirs_regex));
 
-    if ( $self->name =~ /$wad_dirs_regex/ ) {
-        #$log->debug($self->name . qq(is a WAD dir));
+    if ( $self->short_path =~ /$wad_dirs_regex/ ) {
+        #$log->debug($self->short_path . qq( is a WAD dir));
         return 1;
     } else {
-        #$log->debug($self->name . qq(is *NOT* a WAD dir));
+        #$log->debug($self->short_path . qq( is *NOT* a WAD dir));
         return 0;
     }
 }
@@ -2483,6 +2484,7 @@ errors were encountered.
                 if (! ($local_file->is_wad_dir || $local_file->is_metafile)
                     && ! $cfg->defined(q(sync-all))){
                     $log->debug(q(Non-WAD file needs sync, missing --sync-all));
+                    next IDGAMES_LINE;
                 }
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(dry-run is set; parsing next line...));
