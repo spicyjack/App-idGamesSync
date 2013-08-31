@@ -11,11 +11,11 @@ idgames_sync.pl - Synchronize a copy of the C<idgames> archive.
 
 =head1 VERSION
 
-Version v0.0.4
+Version v0.0.5
 
 =cut
 
-use version; our $VERSION = qv('0.0.4');
+use version; our $VERSION = qv('0.0.5');
 
 # shortcut to get the name of the file this script lives in
 use File::Basename;
