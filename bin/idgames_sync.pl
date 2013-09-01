@@ -36,6 +36,7 @@ our @options = (
     q(debug-files=i), # how many lines to parse/compare from ls-laR.gz
     q(debug-noexit), # don't exit when debugging
     q(verbose|v),
+    q(version),
     q(examples|x),
     q(morehelp|m),
     # script options
@@ -135,6 +136,16 @@ sub new {
 
     # dump and bail if we get called with --help
     if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 0); }
+
+    # dump and bail if we get called with --help
+    if ( $self->get(q(version)) ) {
+        print __FILE__
+            . qq(: synchronize files from 'idgames' mirrors to local host\n);
+        print qq(version: $VERSION\n);
+        print qq(copyright: $copyright\n);
+        print qq|license: Same terms as Perl (Perl Artistic/GPLv1 or later)\n|;
+        exit 0;
+    }
 
     # set a flag if we're running on 'MSWin32'
     # this needs to be set before possibly showing examples because examples
