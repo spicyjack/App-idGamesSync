@@ -1,7 +1,9 @@
 #!/usr/bin/env perl
 
-# Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>
-
+use strict;
+use warnings;
+our $copyright = q|Copyright (c) 2011,2013 by Brian Manning |
+    . q|<brian at xaoc dot org>|;
 # For support with this file, please file an issue on the GitHub issue
 # tracker: https://github.com/spicyjack/App-idGamesSync/issues
 
@@ -65,15 +67,13 @@ our @options = (
 
  perl idgames_sync.pl [options]
 
- Help options:
+ Script options:
  -h|--help          Displays script options and usage
  -v|--verbose       Sets logging level to INFO, more verbose output
-
- Required script options:
- -p|--path          Path to the local copy of the idgames archive
-
- Useful script options:
+ --version          Shows script version, then exits
  -n|--dry-run       Don't sync content, explain script actions instead
+
+ -p|--path          Path to the local copy of the idgames archive
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
@@ -176,7 +176,7 @@ sub show_examples {
 
         print <<"WIN_EXAMPLES";
 
- =-=-= $our_name USAGE EXAMPLES =-=-=
+ =-=-= $our_name - $VERSION - USAGE EXAMPLES =-=-=
 
  Create a mirror:
  ----------------
@@ -242,7 +242,7 @@ WIN_EXAMPLES
     } else {
         print <<"NIX_EXAMPLES";
 
- =-=-= $our_name USAGE EXAMPLES =-=-=
+ =-=-= $our_name - $VERSION - USAGE EXAMPLES =-=-=
 
  Create a mirror:
  ----------------
@@ -319,7 +319,7 @@ sub show_morehelp {
 
 print <<MOREHELP;
 
- =-=-= $our_name - More Help Screen =-=-=
+ =-=-= $our_name - $VERSION - More Help Screen =-=-=
 
  Misc. script options:
  ---------------------
@@ -2201,7 +2201,7 @@ errors were encountered.
 
     Log::Log4perl->init(\$log4perl_conf);
     my $log = Log::Log4perl->get_logger();
-    $log->debug(q(##### ) . __FILE__ . qq( #####));
+    $log->debug(q(##### ) . __FILE__ . qq( - $VERSION #####));
     $log->debug(qq(script start; ) . time2str(q(%C), time));
 
     my @exclude_urls;
