@@ -1058,7 +1058,7 @@ sub stat_local {
         $mtime =~ s/\s{2,}/ /;
         $self->mod_time($mtime);
 
-        # this only works in 5.12.1 or newer
+        # this only works in File::stat in Perl 5.12.1 or newer
         #if ( -f $stat ) {
         # file does exist; what kind of file is it?
         if ( -f $self->absolute_path ) {
