@@ -1870,9 +1870,6 @@ sub fetch {
     );
     $log->debug(qq(Created temp file ) . $fh->filename );
 
-    # for formatting synchronized file sizes
-    my $nf = Number::Format->new();
-
     # grab the file
     # $1 = scheme, $2 = host, $3 is path
     $base_url =~ $self->url_regex;
@@ -1915,6 +1912,8 @@ sub fetch {
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
                $atime,$mtime,$ctime,$blksize,$blocks)
                    = stat($fh);
+        # for formatting synchronized file sizes
+        my $nf = Number::Format->new();
         print q(- Download successful, downloaded ) . $nf->format_bytes($size)
             . qq| byte(s)\n|;
         return $fh->filename;
