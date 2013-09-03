@@ -1859,12 +1859,13 @@ sub fetch {
         $filepath = q(/) . $filepath;
     }
 
+    my $filename = (split(/\//, $filepath))[-1];
     # create a tempfile for the download
     my $fh = File::Temp->new(
         # don't unlink files by default; this should be done by the caller
         UNLINK      => 0,
         DIR         => $self->tempdir,
-        TEMPLATE    => q(idgs.XXXXXXXX),
+        TEMPLATE    => qq(idgs.$filename.XXXXXXXX),
         SUFFIX      => q(.tmp),
     );
     $log->debug(qq(Created temp file ) . $fh->filename );
