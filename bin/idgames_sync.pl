@@ -740,6 +740,7 @@ has wad_dirs      => (
         # regex that covers all levels directories
         my $levels = q(^combos|^deathmatch);
         $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
+        $levels .= q(|^newstuff);
         return qr/$levels/;
     },
 );
