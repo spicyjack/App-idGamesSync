@@ -2498,7 +2498,7 @@ errors were encountered.
                     next IDGAMES_LINE;
                 }
                 if ( $cfg->defined(q(dry-run)) ) {
-                    $log->debug(q(dry-run is set; parsing next line...));
+                    $log->debug(q(Needs sync, dry-run set; parsing next line));
                     push(@synced_files, $archive_file);
                     next IDGAMES_LINE;
                 } else {
@@ -2519,7 +2519,7 @@ errors were encountered.
                         . $archive_file->size);
                 }
             } else {
-                $log->debug(q(File does not need to be sync'ed));
+                $log->debug(q(File exists on local system, no need to sync));
             }
         # the directory bit is set in the listing output
         } elsif ( $fields[PERMS] =~ /^d.*/ ) {
@@ -2556,7 +2556,7 @@ errors were encountered.
                     $local_dir->sync( lwp => $lwp );
                 }
             } else {
-                $log->debug(qq(Dir does not need to be synced));
+                $log->debug(qq(Directories do not need to be synchronized));
             }
         # A new directory entry
         } elsif ( $fields[PERMS] =~ /^\.[\/\w\-_\.]*:$/ ) {
