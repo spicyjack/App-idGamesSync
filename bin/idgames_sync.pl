@@ -740,7 +740,10 @@ has wad_dirs      => (
         # regex that covers all levels directories
         my $levels = q(^combos|^deathmatch);
         $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
-        $levels .= q(|^newstuff);
+        # going to implement this as an attribute/boolean flag; this will let
+        # it be reused later on when capturing the contents of the /newstuff
+        # directory, in order to get a list of files to delete
+        #$levels .= q(|^newstuff);
         return qr/$levels/;
     },
 );
@@ -849,6 +852,19 @@ Boolean flag that is set when running under Windows platforms.
 has is_mswin32 => (
     is      => q(rw),
     isa     => q(Bool),
+);
+
+=item is_newstuff
+
+Boolean flag that is set when the current file is located in the C</newstuff>
+directory.
+
+=cut
+
+has is_newstuff => (
+    is      => q(rw),
+    isa     => q(Bool),
+    default => q(0),
 );
 
 =item short_path
@@ -996,6 +1012,10 @@ sub BUILD {
     # trim leading slash, it will be added back later
     $parent_dir =~ s/^\///;
     $self->parent_path($parent_dir);
+    if ( $self->parent_path =~ /^newstuff/ ) {
+        # set the newstuff flag
+        $self->is_newstuff(1);
+    }
     #$log->debug(qq(Parent path is: ) . $self->parent_path);
     if ( length($self->parent_path) > 0 ) {
         $self->url_path($self->parent_path . q(/) . $self->name);
@@ -1111,11 +1131,10 @@ sub sync {
     if ( ref($self) eq q(Local::File) ) {
         # check to see if this is one of the metadata files, or a file in the
         # /newstuff directory; if so, sync it from the master mirror, as the
-        # other mirrors may not be in sync and have the file
+        # other mirrors may not have the file sync'ed yet
         my $temp_file;
-        if ( $self->url_path =~ /$self->metafiles/
-                || $self->parent_path =~ /newstuff/ ) {
-            $log->debug(q(Syncing "meta" file from master mirror));
+        if ( $self->is_metafile || $self->is_newstuff ) {
+            $log->debug(q(Syncing [meta|newstuff] file from master mirror));
             $temp_file = $lwp->fetch(
                 base_url => $lwp->master_mirror,
                 filepath => $self->url_path
@@ -1633,8 +1652,6 @@ use Mouse;
 use Number::Format;
 
 my @usable_mirrors;
-# used for /newstuff
-
 my @idgames_mirrors = qw(
     ftp://ftp.fu-berlin.de/pc/games/idgames
     ftp://ftp.ntua.gr/pub/vendors/idgames
@@ -2071,6 +2088,10 @@ sub write_stats {
         unless ( exists $args{total_archive_files} );
     $log->logdie(qq(missing 'total_archive_size' argument))
         unless ( exists $args{total_archive_size} );
+    $log->logdie(qq(missing 'newstuff_file_count' argument))
+        unless ( exists $args{newstuff_file_count} );
+    $log->logdie(qq(missing 'newstuff_deleted_count' argument))
+        unless ( exists $args{newstuff_deleted_count} );
 
     my $total_synced_bytes = 0;
     my @synced_files = @{$args{synced_files}};
@@ -2096,6 +2117,11 @@ sub write_stats {
         $output .= qq(- Total bytes synced from archive: );
     }
     $output .= $nf->format_bytes($total_synced_bytes) . qq(\n);
+    $output .= qq(- Total files in /newstuff directory: );
+    $output .= $args{newstuff_file_count} . qq(\n);
+    $output .= qq(- Total old files deleted from /newstuff directory: );
+    $output .= $args{newstuff_deleted_count} . qq(\n);
+
     $output .= qq(- Total script execution time: )
         . sprintf('%0.2f', tv_interval ( $start_time, $stop_time ) )
         . qq( seconds\n);
@@ -2116,6 +2142,7 @@ use Date::Format; # strftime
 use Digest::MD5; # comparing the ls-laR.gz files
 use English;
 use File::Copy;
+use File::Find::Rule;
 use File::stat;
 use Getopt::Long;
 use IO::File;
@@ -2430,6 +2457,7 @@ errors were encountered.
     ### PARSE ls-laR.gz FILE ###
     my $debug_counter = 0;
     my $current_dir;
+    my %newstuff_dir;
     IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
@@ -2485,6 +2513,12 @@ errors were encountered.
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
             );
+            if ( $local_file->is_newstuff ) {
+                    # add this file to the list of files that should be in
+                    # /newstuff
+                    $newstuff_dir{$local_file->absolute_path}++;
+                    $log->debug(q(Added file to /newstuff list));
+            }
             if ( $local_file->needs_sync ) {
                 # skip syncing dotfiles unless --dotfiles was used
                 if ($local_file->is_dotfile && ! $cfg->get(q(dotfiles))) {
@@ -2493,7 +2527,9 @@ errors were encountered.
                 }
                 # skip syncing non-WAD files/metafiles unless --sync-all was
                 # used
-                if (! ($local_file->is_wad_dir || $local_file->is_metafile)
+                if (! ($local_file->is_wad_dir
+                    || $local_file->is_metafile
+                    || $local_file->is_newstuff)
                     && ! $cfg->defined(q(sync-all))){
                     $log->debug(q(Non-WAD file needs sync, missing --sync-all));
                     next IDGAMES_LINE;
@@ -2616,11 +2652,38 @@ errors were encountered.
             }
         }
     } # foreach my $line ( split(/\n/, $buffer) )
+
+    # check the contents of /newstuff, make sure that files have been deleted
+    # if they don't belong there anymore
+    my $newstuff_deleted_count = 0;
+    $log->debug(q(Checking /newstuff for files to delete));
+    $log->debug(q(/newstuff currently should have )
+        . scalar(keys(%newstuff_dir)) . q( files));
+    my @newstuff_files = File::Find::Rule
+        ->file
+        ->in($cfg->get(q(path)) . q(newstuff));
+    foreach my $newstuff_file ( sort(@newstuff_files) ) {
+        if ( ! exists ($newstuff_dir{$newstuff_file}) ) {
+            if ( ! $cfg->defined(q(dry-run)) ) {
+                $log->debug(qq(/newstuff file $newstuff_file will be deleted));
+            } else {
+                print qq(* Deleting /newstuff file $newstuff_file\n);
+                unlink $newstuff_file;
+                $newstuff_deleted_count++;
+            }
+        }
+    }
+
+    # stop the timer prior to calculating stats
     $stats->stop_timer();
+
+    # calc stats and write them out
     $stats->write_stats(
         synced_files            => \@synced_files,
         total_archive_files     => $total_archive_files,
         total_archive_size      => $total_archive_size,
+        newstuff_file_count     => scalar(keys(%newstuff_dir)),
+        newstuff_deleted_count  => $newstuff_deleted_count,
     );
     exit 0;
 
