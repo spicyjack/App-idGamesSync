@@ -2664,10 +2664,10 @@ errors were encountered.
         ->in($cfg->get(q(path)) . q(newstuff));
     foreach my $newstuff_file ( sort(@newstuff_files) ) {
         if ( ! exists ($newstuff_dir{$newstuff_file}) ) {
-            if ( ! $cfg->defined(q(dry-run)) ) {
-                $log->debug(qq(/newstuff file $newstuff_file will be deleted));
+            if ( $cfg->defined(q(dry-run)) ) {
+                print qq(* Would delete /newstuff file: $newstuff_file\n));
             } else {
-                print qq(* Deleting /newstuff file $newstuff_file\n);
+                print qq(* Deleting /newstuff file: $newstuff_file\n);
                 unlink $newstuff_file;
                 $newstuff_deleted_count++;
             }
