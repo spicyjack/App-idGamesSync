@@ -2143,6 +2143,7 @@ package main;
 
 ### external packages
 use Date::Format; # strftime
+use Devel::Size; # for profiling filelist hashes (/newstuff, archive)
 use Digest::MD5; # comparing the ls-laR.gz files
 use English;
 use File::Copy;
@@ -2360,7 +2361,6 @@ errors were encountered.
     # they're missing from the local system, or for files, the file is the
     # wrong size
     my @synced_files;
-    my $total_archive_files = 0;
     my $total_archive_size = 0;
     my $dl_lslar_file;
     my $lslar_file = $cfg->get(q(path)) . q(ls-laR.gz);
@@ -2459,7 +2459,7 @@ errors were encountered.
     $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
 
     ### PARSE ls-laR.gz FILE ###
-    my $debug_counter = 0;
+    my %idgames_filelist;
     my $current_dir;
     my %newstuff_dir;
     IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
@@ -2492,7 +2492,7 @@ errors were encountered.
                 $log->debug(q(file in /incoming, but --incoming not used));
                 next IDGAMES_LINE;
             }
-            $total_archive_files++;
+
             $log->debug(qq(Creating archive file object '$name_field'));
             my $archive_file = Archive::File->new(
                 parent_path     => $current_dir,
@@ -2512,7 +2512,11 @@ errors were encountered.
                 archive_obj => $archive_file,
                 is_mswin32  => $cfg->defined(q(is_mswin32)),
             );
+            # stat the file to see if it exists on the local system, and to
+            # populate file attribs if it does exist
             $local_file->stat_local();
+            # add the file to the filelist
+            $idgames_filelist{$local_file->absolute_path}++;
             $report->write_record(
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
@@ -2632,14 +2636,14 @@ errors were encountered.
         } else {
             $log->warn(qq(Unknown line found in input data; >$line<));
         }
-        $debug_counter++;
         if ( $log->is_debug() ) {
             # don't worry about counters or constants if --debug-noexit was
             # used
             next IDGAMES_LINE if ( $cfg->defined(q(debug-noexit)) );
             # check to see if --debug-files was used
             if ( $cfg->defined(q(debug-files)) ) {
-                if ( $debug_counter > $cfg->get(q(debug-files)) ) {
+                if ( scalar(keys(%idgames_filelist))
+                        > $cfg->get(q(debug-files)) ) {
                     $log->debug(q|reached | . $cfg->get(q(debug-files))
                         . q( files));
                     $log->debug(q(Exiting script early due to --debug flag));
@@ -2647,7 +2651,7 @@ errors were encountered.
                 }
             } else {
                 # go with the constant 'DEBUG_LOOPS'
-                if ( $debug_counter == DEBUG_LOOPS ) {
+                if ( scalar(keys(%idgames_filelist)) == DEBUG_LOOPS ) {
                     $log->debug(q|DEBUG_LOOPS (| . DEBUG_LOOPS
                         . q|) reached...|);
                     $log->debug(q(Exiting script early due to --debug flag));
@@ -2659,6 +2663,9 @@ errors were encountered.
 
     # check the contents of /newstuff, make sure that files have been deleted
     # if they don't belong there anymore
+    # FIXME redo this so it finds all files in $cfg->get(q(path)), and greps
+    # out the files in /newstuff, unless the user asks to check for extra
+    # files to be deleted in the whole mirror
     my $newstuff_deleted_count = 0;
     $log->debug(q(Checking /newstuff for files to delete));
     $log->debug(q(/newstuff currently should have )
@@ -2667,6 +2674,7 @@ errors were encountered.
         ->file
         ->in($cfg->get(q(path)) . q(newstuff));
     foreach my $newstuff_file ( sort(@newstuff_files) ) {
+        # FIXME this would also work with all files instead of just newstuff
         if ( ! exists ($newstuff_dir{$newstuff_file}) ) {
             if ( $cfg->defined(q(dry-run)) ) {
                 print qq(* Would delete /newstuff file: $newstuff_file\n));
@@ -2683,8 +2691,8 @@ errors were encountered.
 
     # calc stats and write them out
     $stats->write_stats(
-        synced_files            => \@synced_files,
-        total_archive_files     => $total_archive_files,
+        total_synced_files      => \@synced_files,
+        total_archive_files     => scalar(keys(%idgames_filelist)),
         total_archive_size      => $total_archive_size,
         newstuff_file_count     => scalar(keys(%newstuff_dir)),
         newstuff_deleted_count  => $newstuff_deleted_count,
