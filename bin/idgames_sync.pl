@@ -1114,7 +1114,11 @@ sub stat_local {
 =item sync
 
 Syncs a remote file or directory to the local system.  Local directories are
-created, local files are synchronized from the remote system.
+created, local files are synchronized from the remote system.  Returns C<1> if
+the file was synchronized (downloaded to the local system as a tempfile and
+renamed with the same name and location in the archive as the copy on the
+mirror), or in the case of directories, the directory was created successfully,
+returns a C<0> otherwise.
 
 =cut
 
