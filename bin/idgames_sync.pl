@@ -2677,7 +2677,7 @@ errors were encountered.
         # FIXME this would also work with all files instead of just newstuff
         if ( ! exists ($newstuff_dir{$newstuff_file}) ) {
             if ( $cfg->defined(q(dry-run)) ) {
-                print qq(* Would delete /newstuff file: $newstuff_file\n));
+                print qq(* Would delete /newstuff file: $newstuff_file\n);
             } else {
                 print qq(* Deleting /newstuff file: $newstuff_file\n);
                 unlink $newstuff_file;
