@@ -295,7 +295,7 @@ WIN_EXAMPLES
  ----------------------------
  # specific mirror, 'simple' output format, show all files being mirrored
  $our_name --path /path/to/your/idgames/dir \\
-    --url http://example.com --format simple --type all
+    --url http://example.com --format simple --size-same
 
  # use random mirrors, exclude a specific mirror, 'simple' output format
  $our_name --path /path/to/your/idgames/dir \\
@@ -374,7 +374,6 @@ print <<MOREHELP;
  - archive  - Files on the local disk not listed in the archive
  - size     - Size differences between the local file and archive file
  - same     - Same size file exists on disk and in the archive
- - all      - Print all of the above information
 
  The default report type is "size + local" (same as '--size-local' below).
 
@@ -384,8 +383,8 @@ print <<MOREHELP;
  times.
  --size-local   (size + local) Show file size mismatches, and files missing on
                 local system; this is the default report type
- --size-same    (size + same) Show all files, both valid files and size
-                mismatched files
+ --size-same    (size + same) Show all files listed in the archive, both with
+                valid local files and with size mismatched local files
 
  Output formats (for use with the --format switch):
  --------------------------------------------------
