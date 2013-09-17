@@ -173,7 +173,7 @@ sub new {
     return $self;
 }
 
-=item show_examples
+=item show_examples()
 
 Show examples of script usage.
 
@@ -320,7 +320,7 @@ NIX_EXAMPLES
     }
 }
 
-=item show_morehelp
+=item show_morehelp()
 
 Show more help information on how to use the script and how the script
 functions.
@@ -420,7 +420,7 @@ sub get {
     return undef;
 }
 
-=item set( key => $value )
+=item set(key => $value)
 
 Sets in the L<JenkBuilder::Config> object the key/value pair passed in
 as arguments.  Returns the old value if the key already existed in the
@@ -625,8 +625,6 @@ has name        => (
 
 The parent_path directory of this file/directory.
 
-=back
-
 =cut
 
 has parent_path      => (
@@ -640,8 +638,6 @@ A regular expression reference of filenames that match "dotfiles" or files
 that are meant to be hidden on *NIX platforms.  These files are usually used
 to store text messages that are displayed in FTP/HTTP directory listings.
 
-=back
-
 =cut
 
 has dotfiles      => (
@@ -650,7 +646,55 @@ has dotfiles      => (
     default => sub {qr/\.message|\.DS_Store|\.mirror_log|\.listing/;}
 );
 
-=item is_dotfile
+=item metafiles
+
+A regular expression that describes a set of files ("metadata files") that
+should usually be downloaded from the master mirror, unless C<--url>
+is used, in which case, these files will be downloaded from the mirror server
+specified with C<--url>.
+
+=cut
+
+has metafiles     => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    default => sub {
+        qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS|README\.*/;},
+);
+
+=item wad_dirs
+
+A regular expression that describes directories where C<WAD> files are stored
+inside of the C<idgames> Mirror.
+
+=cut
+
+has wad_dirs      => (
+    is      => q(ro),
+    isa     => q(RegexpRef),
+    default => sub {
+        # regex that covers all "non-WAD" directories
+        #my $levels = q(/docs|/graphics|/history|/idstuff|/lmps|/misc|/music);
+        #$levels .= q(|/prefabs|/roguestuff|/skins|/sounds|/source);
+        #$levels .= q(|/themes|/utils);
+        # regex that covers all levels directories
+        my $levels = q(^combos|^deathmatch);
+        $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
+        # going to implement this as an attribute/boolean flag; this will let
+        # it be reused later on when capturing the contents of the /newstuff
+        # directory, in order to get a list of files to delete
+        #$levels .= q(|^newstuff);
+        return qr/$levels/;
+    },
+);
+
+=back
+
+=head3 Methods
+
+=over
+
+=item is_dotfile()
 
 Tests to see if the current file/directory is a "dotfile", or a file that is
 usually hidden on *NIX systems.  You usually don't care about these files,
@@ -677,25 +721,7 @@ sub is_dotfile {
     }
 }
 
-=item metafiles
-
-A regular expression that describes a set of files ("metadata files") that
-should usually be downloaded from the master mirror, unless C<--url>
-is used, in which case, these files will be downloaded from the mirror server
-specified with C<--url>.
-
-=back
-
-=cut
-
-has metafiles     => (
-    is      => q(ro),
-    isa     => q(RegexpRef),
-    default => sub {
-        qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS|README\.*/;},
-);
-
-=item is_metafile
+=item is_metafile()
 
 Tests to see if the current file/directory is a "metafile", or a
 meta-information file.  Returns C<0> false if the current object is not a
@@ -720,35 +746,7 @@ sub is_metafile {
     }
 }
 
-=item wad_dirs
-
-A regular expression that describes directories where C<WAD> files are stored
-inside of the C<idgames> Mirror.
-
-=back
-
-=cut
-
-has wad_dirs      => (
-    is      => q(ro),
-    isa     => q(RegexpRef),
-    default => sub {
-        # regex that covers all "non-WAD" directories
-        #my $levels = q(/docs|/graphics|/history|/idstuff|/lmps|/misc|/music);
-        #$levels .= q(|/prefabs|/roguestuff|/skins|/sounds|/source);
-        #$levels .= q(|/themes|/utils);
-        # regex that covers all levels directories
-        my $levels = q(^combos|^deathmatch);
-        $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
-        # going to implement this as an attribute/boolean flag; this will let
-        # it be reused later on when capturing the contents of the /newstuff
-        # directory, in order to get a list of files to delete
-        #$levels .= q(|^newstuff);
-        return qr/$levels/;
-    },
-);
-
-=item is_wad_dir
+=item is_wad_dir()
 
 Tests to see if the current directory is in a "WAD directory", or a directory
 known to have C<WAD> files inside of it.  Returns C<0> false if the directory
@@ -773,6 +771,8 @@ sub is_wad_dir {
         return 0;
     }
 }
+
+=back
 
 =head2 Role::LocalFileDir
 
@@ -843,29 +843,6 @@ has absolute_path => (
     isa     => q(Str),
 );
 
-=item is_mswin32
-
-Boolean flag that is set when running under Windows platforms.
-
-=cut
-
-has is_mswin32 => (
-    is      => q(rw),
-    isa     => q(Bool),
-);
-
-=item is_newstuff
-
-Boolean flag that is set when the current file is located in the C</newstuff>
-directory.
-
-=cut
-
-has is_newstuff => (
-    is      => q(rw),
-    isa     => q(Bool),
-    default => q(0),
-);
 
 =item short_path
 
@@ -1111,7 +1088,7 @@ sub stat_local {
     }
 }
 
-=item sync
+=item sync()
 
 Syncs a remote file or directory to the local system.  Local directories are
 created, local files are synchronized from the remote system.  Returns C<1> if
@@ -1172,7 +1149,7 @@ sub sync {
     return 0;
 }
 
-=item exists
+=item exists()
 
 Tests to see if the file or directory specified by the arguments exist on the
 local filesystem.
@@ -1194,7 +1171,7 @@ sub exists {
     }
 }
 
-=item append_notes
+=item append_notes()
 
 Add more notes to the C<notes> attribute of this object.
 
@@ -1209,6 +1186,30 @@ sub append_notes {
         $self->notes($notes . $new_notes);
     }
 }
+
+=item is_mswin32()
+
+Boolean flag that is set when running under Windows platforms.
+
+=cut
+
+has is_mswin32 => (
+    is      => q(rw),
+    isa     => q(Bool),
+);
+
+=item is_newstuff()
+
+Boolean flag that is set when the current file is located in the C</newstuff>
+directory.
+
+=cut
+
+has is_newstuff => (
+    is      => q(rw),
+    isa     => q(Bool),
+    default => q(0),
+);
 
 =back
 
@@ -1446,7 +1447,7 @@ sub BUILD {
     }
 }
 
-=item write_record
+=item write_record()
 
 Writes the of file/directory attributes of the file in the archive and on the
 local filesystem, if present.  The output format of the record is determined
@@ -1523,7 +1524,7 @@ sub write_record {
     }
 }
 
-=item format_simple
+=item format_simple()
 
 Reports on the difference between the archive file and the file on the local
 system, in a simple, one-line format.
@@ -1555,7 +1556,7 @@ $l->short_type, $l->short_status, $filepath, $a->mod_time, $a->size
     write();
 }
 
-=item format_more
+=item format_more()
 
 Reports on the difference between the archive file and the file on the local
 system, in a more verbose three line format; the first line is the name of the
@@ -1595,7 +1596,7 @@ $l->perms, $l->owner, $l->group, $l->mod_time, $l->size, $l->long_status
     write();
 }
 
-=item format_full
+=item format_full()
 
 Reports on the difference between the archive file and the file on the local
 system, in a very verbose three line format; the first line is the name of the
@@ -1639,7 +1640,6 @@ $a->parent_path . q(/) . $a->name
     write();
 
 }
-
 
 =head2 LWP::Wrapper
 
@@ -1749,7 +1749,7 @@ has q(tempdir) => (
 
 =over
 
-=item new (BUILD)
+=item new() (BUILD)
 
 Creates the L<LWP::UserAgent> wrapper object.
 
@@ -1786,7 +1786,7 @@ sub BUILD {
     }
 }
 
-=item get_random_mirror
+=item get_random_mirror()
 
 Returns a random mirror server from a list of "valid" mirror servers, i.e. the
 built-in list of mirror servers minus servers excluded via the C<--exclude>
@@ -1800,7 +1800,7 @@ sub get_random_mirror {
     return $usable_mirrors[$url_index];
 }
 
-=item get_base_url
+=item get_base_url()
 
 Returns the base URL as set by the user, or a random mirror if the user did
 not specify a base URL.
@@ -1824,7 +1824,7 @@ sub get_base_url {
     return $base_url;
 }
 
-=item fetch
+=item fetch()
 
 Required arguments:
 
@@ -1946,7 +1946,7 @@ sub fetch {
     }
 }
 
-=item get_mirror_list
+=item get_mirror_list()
 
 Returns a list of C<idgames> mirror servers.
 
@@ -2055,11 +2055,13 @@ has q(total_archive_size) => (
 
 =back
 
+=back
+
 =head3 Methods
 
 =over
 
-=item start_timer
+=item start_timer()
 
 Starts the internal timer, used to measure total script execution time.
 
@@ -2069,7 +2071,7 @@ sub start_timer {
     $start_time = [gettimeofday];
 }
 
-=item stop_timer
+=item stop_timer()
 
 Stops the internal timer, used to measure total script execution time.
 
@@ -2079,7 +2081,7 @@ sub stop_timer {
     $stop_time = [gettimeofday];
 }
 
-=item write_stats
+=item write_stats()
 
 Output the runtime stats from the script.
 
