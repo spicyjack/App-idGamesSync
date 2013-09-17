@@ -1547,9 +1547,11 @@ sub format_simple {
         $filepath = $a->name;
     }
 
+    my ($month, $date, $year_time) = $self->split_mod_time(file_obj => $a);
+
 format SIMPLE =
-@@ @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<<<<<<<<<<<<< @#########
-$l->short_type, $l->short_status, $filepath, $a->mod_time, $a->size
+@@ @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< @<< @> @<<<< @#########
+$l->short_type, $l->short_status, $filepath, $month, $date, $year_time, $a->size
 .
     # set the current $FORMAT_NAME to the SIMPLE format
     $~ = q(SIMPLE);
@@ -1575,22 +1577,29 @@ sub format_more {
     my $l = $args{local_obj};
     my $a = $args{archive_obj};
 
+
+
+    my $notes = q();
+        if ( length($l->long_status) > 0 ) {
+        $notes = q(Notes:);
+    }
+
+    my ($a_month, $a_date, $a_year_time) =
+        $self->split_mod_time(file_obj => $a);
+    my ($l_month, $l_date, $l_year_time) =
+        $self->split_mod_time(file_obj => $l);
+
 ### BEGIN FORMAT
-
-my $notes = q();
-if ( length($l->long_status) > 0 ) {
-    $notes = q(Notes:);
-}
-
 format MORE =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 $a->parent_path . q(/) . $a->name
-  archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<
-$a->perms, $a->owner, $a->group, $a->mod_time, $a->size, $notes
-  local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @||||||||||| @######## @<<<<<<<<<<<<<<
-$l->perms, $l->owner, $l->group, $l->mod_time, $l->size, $l->long_status
+  archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @>> @> @<<<< @######## @<<<<<<<<<<<<<<
+$a->perms, $a->owner, $a->group, $a_month, $a_date, $a_year_time, $a->size, $notes
+  local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @>> @> @<<<< @######## @<<<<<<<<<<<<<<
+$l->perms, $l->owner, $l->group, $a_month, $a_date, $a_year_time, $l->size, $l->long_status
 .
 ### END FORMAT
+
     # set the current $FORMAT_NAME to the MORE format
     $~ = q(MORE);
     write();
@@ -1616,6 +1625,12 @@ sub format_full {
     my $l = $args{local_obj};
     my $a = $args{archive_obj};
 
+    my ($a_month, $a_date, $a_year_time) =
+        $self->split_mod_time(file_obj => $a);
+    my ($l_month, $l_date, $l_year_time) =
+        $self->split_mod_time(file_obj => $l);
+
+### BEGIN FORMAT
 format FULL =
 @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 $a->parent_path . q(/) . $a->name
@@ -1626,8 +1641,8 @@ $a->parent_path . q(/) . $a->name
   $a->owner, $l->owner
   group:       @>>>>>>>>>>>>    group:       @>>>>>>>>>>>>
   $a->group, $l->group
-  mtime:       @<<<<<<<<<<<<    mtime:       @<<<<<<<<<<<<
-  $a->mod_time, $l->mod_time
+  mtime:       @>>> @> @>>>>    mtime:       @>>> @> @>>>>
+  $a_month, $a_date, $a_year_time, $l_month, $l_date, $l_year_time
   size:        @############    size:        @############
   $a->size, $l->size
   Notes: @<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -1635,10 +1650,32 @@ $a->parent_path . q(/) . $a->name
 .
 ### END FORMAT
 
-    # write out the report
+    # set the current $FORMAT_NAME to the FULL format and write report
     $~ = q(FULL);
     write();
 
+}
+
+=item split_mod_time()
+
+Splits a file's C<mod_time> attribute into separate month, date, and year or
+time elements, and returns those elements as a list.  Splitting the fields
+like this makes it so the fields can be aligned in the output reports.
+
+=back
+
+=cut
+
+sub split_mod_time {
+    my $self = shift;
+    my %args = @_;
+
+    my $log = Log::Log4perl->get_logger();
+
+    my $file = $args{file_obj};
+    my $file_time = $file->mod_time;
+    my ($month, $date, $year_time) =  split(/ /, $file_time);
+    return ($month, $date, $year_time);
 }
 
 =head2 LWP::Wrapper
