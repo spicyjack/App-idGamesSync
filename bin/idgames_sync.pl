@@ -1469,7 +1469,9 @@ sub write_record {
 
     my $a = $args{archive_obj};
     my $l = $args{local_obj};
-    my $write_flag;
+
+    # whether or not to report on the file
+    my $write_report_flag;
 
     # return unless...
     # - file is missing on local and 'local' is set
@@ -1481,26 +1483,28 @@ sub write_record {
     # missing files
     my $checkname = $a->name;
     if ( $l->short_status eq IS_MISSING ) {
-        if ( $self->report_types =~ /local/ ) { $write_flag = 1; }
+        if ( $self->report_types =~ /local/ ) { $write_report_flag = 1; }
     }
     # different size files
     if ( $l->short_status eq DIFF_SIZE ) {
-        if ( $self->report_types =~ /size/ ) { $write_flag = 1; }
+        if ( $self->report_types =~ /size/ && ! $l->is_metafile ) {
+            $write_report_flag = 1;
+        }
     }
     # is a file/directory on the local filesystem
     if ( $l->short_status eq IS_FILE || $l->short_status eq IS_DIR ) {
-        if ( $self->report_types =~ /same/ ) { $write_flag = 1; }
+        if ( $self->report_types =~ /same/ ) { $write_report_flag = 1; }
     }
     # is an unknown file on the local filesystem
     if ( $l->short_status eq IS_UNKNOWN ) {
-        $write_flag = 1;
+        $write_report_flag = 1;
     }
     # skip dotfiles?
     if ( $l->is_dotfile == 1 && ! $self->show_dotfiles ) {
         $log->debug(q(Found dotfile, but --dotfiles not set, not displaying));
-        $write_flag = 0;
+        $write_report_flag = 0;
     }
-    return undef unless ( $write_flag );
+    return undef unless ( $write_report_flag );
 
     if ( $self->report_format eq q(full) ) {
         $self->format_full(
