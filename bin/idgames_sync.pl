@@ -50,6 +50,7 @@ our @options = (
     q(colorize!), # always colorize logs, no matter if a pipe is present or not
     q(loglevel|log|level|ll=s),
     # misc options
+    q(prune-all), # prune files from the mirror, not just /newstuff
     q(sync-all), # sync everything, not just WADs
     q(show-mirrors), # show the mirrors array and exit
     q(create-mirror), # create a new mirror if ls-laR.gz not found at --path
@@ -2094,8 +2095,8 @@ sub write_stats {
         unless ( exists $args{total_archive_size} );
     $log->logdie(qq(missing 'newstuff_file_count' argument))
         unless ( exists $args{newstuff_file_count} );
-    $log->logdie(qq(missing 'newstuff_deleted_count' argument))
-        unless ( exists $args{newstuff_deleted_count} );
+    $log->logdie(qq(missing 'deleted_file_count' argument))
+        unless ( exists $args{deleted_file_count} );
 
     my $total_synced_bytes = 0;
     my @total_synced_files = @{$args{total_synced_files}};
@@ -2124,7 +2125,7 @@ sub write_stats {
     $output .= qq(- Total files in /newstuff directory: );
     $output .= $args{newstuff_file_count} . qq(\n);
     $output .= qq(- Total old files deleted from /newstuff directory: );
-    $output .= $args{newstuff_deleted_count} . qq(\n);
+    $output .= $args{deleted_file_count} . qq(\n);
 
     $output .= qq(- Total script execution time: )
         . sprintf('%0.2f', tv_interval ( $start_time, $stop_time ) )
@@ -2515,8 +2516,10 @@ errors were encountered.
             # stat the file to see if it exists on the local system, and to
             # populate file attribs if it does exist
             $local_file->stat_local();
+
             # add the file to the filelist
             $idgames_filelist{$local_file->absolute_path}++;
+
             $report->write_record(
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
@@ -2559,7 +2562,7 @@ errors were encountered.
                 # shown in ls-laR.gz; make another call to stat_local; make
                 # another call to stat_local
                 if ( ($local_file->size != $archive_file->size)
-                    && $local_file->is_metafile ) {
+                    && ! $local_file->is_metafile ) {
                     $log->warn(q(Downloaded size: ) . $local_file->size
                         . q( doesn't match archive file size: )
                         . $archive_file->size);
@@ -2667,22 +2670,52 @@ errors were encountered.
     # FIXME redo this so it finds all files in $cfg->get(q(path)), and greps
     # out the files in /newstuff, unless the user asks to check for extra
     # files to be deleted in the whole mirror
-    my $newstuff_deleted_count = 0;
-    $log->debug(q(Checking /newstuff for files to delete));
-    $log->debug(q(/newstuff currently should have )
-        . scalar(keys(%newstuff_dir)) . q( files));
-    my @newstuff_files = File::Find::Rule
+    my $deleted_file_count = 0;
+
+    # all of the files in the local mirror
+    my @local_idgames_files = File::Find::Rule
         ->file
-        ->in($cfg->get(q(path)) . q(newstuff));
-    foreach my $newstuff_file ( sort(@newstuff_files) ) {
-        # FIXME this would also work with all files instead of just newstuff
-        if ( ! exists ($newstuff_dir{$newstuff_file}) ) {
+        ->in($cfg->get(q(path)));
+
+    # are we only deleting from newstuff?
+    my @local_file_check;
+    if ( $cfg->defined(q(prune-all)) ) {
+        $log->debug(q(Checking local archive for files to delete));
+        $log->debug(q(There are currently ) . scalar(keys(%idgames_filelist))
+            . q( files on the 'idgames' Archive mirrors));
+        $log->debug(q(There are currently ) . scalar(@local_idgames_files)
+            . q( files in the local copy of 'idgames' archive));
+        @local_file_check = @local_idgames_files;
+    } else {
+        $log->debug(q(Checking /newstuff for files to delete));
+        $log->debug(q(/newstuff currently should have )
+            . scalar(keys(%newstuff_dir)) . q( files));
+        my $newstuff_path = $cfg->get(q(path)) . q(newstuff);
+        @local_file_check = grep(/$newstuff_path/, @local_idgames_files);
+    }
+
+    foreach my $local_file ( sort(@local_file_check) ) {
+        my $check_file;
+        my $delete_location;
+        # see if the $check_file exists in the archive (and in /newstuff)
+        if ( $cfg->defined(q(prune-all)) ) {
+            $check_file = $idgames_filelist{$local_file};
+            $delete_location = "non-archive";
+        } else {
+            $check_file = $idgames_filelist{$local_file};
+            $delete_location = "/newstuff";
+        }
+        # if the file does not exist in the archive/in /newstuff
+        if ( ! defined $check_file ) {
             if ( $cfg->defined(q(dry-run)) ) {
-                print qq(* Would delete /newstuff file: $newstuff_file\n);
+                print qq(* Would delete $delete_location file: $local_file\n);
             } else {
-                print qq(* Deleting /newstuff file: $newstuff_file\n);
-                unlink $newstuff_file;
-                $newstuff_deleted_count++;
+                print qq(* Deleting $delete_location file: $local_file\n);
+                if ( unlink $local_file ) {
+                    $deleted_file_count++;
+                } else {
+                    $log->error(qq(Can't unlink $local_file: $!));
+                }
             }
         }
     }
@@ -2696,7 +2729,7 @@ errors were encountered.
         total_archive_files     => scalar(keys(%idgames_filelist)),
         total_archive_size      => $total_archive_size,
         newstuff_file_count     => scalar(keys(%newstuff_dir)),
-        newstuff_deleted_count  => $newstuff_deleted_count,
+        deleted_file_count      => $deleted_file_count,
     );
     exit 0;
 
