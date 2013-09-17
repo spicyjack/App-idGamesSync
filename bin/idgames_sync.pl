@@ -2086,8 +2086,8 @@ sub write_stats {
     my %args = @_;
 
     my $log = Log::Log4perl->get_logger();
-    $log->logdie(qq(missing 'synced_files' argument))
-        unless ( exists $args{synced_files} );
+    $log->logdie(qq(missing 'total_synced_files' argument))
+        unless ( exists $args{total_synced_files} );
     $log->logdie(qq(missing 'total_archive_files' argument))
         unless ( exists $args{total_archive_files} );
     $log->logdie(qq(missing 'total_archive_size' argument))
@@ -2098,9 +2098,9 @@ sub write_stats {
         unless ( exists $args{newstuff_deleted_count} );
 
     my $total_synced_bytes = 0;
-    my @synced_files = @{$args{synced_files}};
+    my @total_synced_files = @{$args{total_synced_files}};
     print qq(Calculating runtime statistics...\n);
-    foreach my $synced ( @synced_files ) {
+    foreach my $synced ( @total_synced_files ) {
         $total_synced_bytes += $synced->size;
     }
     my $nf = Number::Format->new();
@@ -2114,7 +2114,7 @@ sub write_stats {
     } else {
         $output .= qq(- Total files synced from archive: );
     }
-    $output .= scalar(@synced_files) . qq(\n);
+    $output .= scalar(@total_synced_files) . qq(\n);
     if ( $self->dry_run ) {
         $output .= qq(- Total bytes to be synced from archive: );
     } else {
@@ -2558,7 +2558,7 @@ errors were encountered.
                 # check here that the downloaded file matches the size
                 # shown in ls-laR.gz; make another call to stat_local; make
                 # another call to stat_local
-                if ( $local_file->size != $archive_file->size ) {
+                if ( ($local_file->size != $archive_file->size) ) {
                     $log->warn(q(Downloaded size: ) . $local_file->size
                         . q( doesn't match archive file size: )
                         . $archive_file->size);
