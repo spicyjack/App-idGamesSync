@@ -2558,7 +2558,8 @@ errors were encountered.
                 # check here that the downloaded file matches the size
                 # shown in ls-laR.gz; make another call to stat_local; make
                 # another call to stat_local
-                if ( ($local_file->size != $archive_file->size) ) {
+                if ( ($local_file->size != $archive_file->size)
+                    && $local_file->is_metafile ) {
                     $log->warn(q(Downloaded size: ) . $local_file->size
                         . q( doesn't match archive file size: )
                         . $archive_file->size);
