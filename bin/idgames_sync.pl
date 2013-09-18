@@ -2,8 +2,9 @@
 
 use strict;
 use warnings;
-our $copyright = q|Copyright (c) 2011,2013 by Brian Manning |
-    . q|<brian at xaoc dot org>|;
+our $copyright =
+    q|Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>|;
+
 # For support with this file, please file an issue on the GitHub issue
 # tracker: https://github.com/spicyjack/App-idGamesSync/issues
 
