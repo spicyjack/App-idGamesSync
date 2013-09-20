@@ -2285,6 +2285,12 @@ errors were encountered.
     $log4perl_conf .= qq(log4perl.appender.Screen.stderr = 1\n)
         . qq(log4perl.appender.Screen.layout = PatternLayout\n)
         . q(log4perl.appender.Screen.layout.ConversionPattern )
+        # %r: number of milliseconds elapsed since program start
+        # %p{1}: first letter of event priority
+        # %4L: line number where log statement was used, four numbers wide
+        # %M{1}: Name of the method name where logging request was issued
+        # %m: message
+        # %n: newline
         . qq|= [%8r] %p{1} %4L (%M{1}) %m%n\n|;
 
     Log::Log4perl->init(\$log4perl_conf);
