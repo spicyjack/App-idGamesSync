@@ -24,7 +24,6 @@ WriteMakefile(
         'File::Temp'            => 0,
         'Getopt::Long'          => 0,
         'IO::File'              => 0,
-        'IO::Uncompress::Gzip'  => 0,
         'Log::Log4perl'         => 0,
         'LWP::UserAgent'        => 0,
         'Mouse'                 => 0,
