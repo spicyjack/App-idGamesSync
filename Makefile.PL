@@ -6,7 +6,8 @@ WriteMakefile(
     NAME                => 'App::idGamesЅync',
     AUTHOR              => 'Brian Manning <brian at xaoc dot org>',
     VERSION_FROM        => 'bin/idgames_sync.pl',
-    ABSTRACT_FROM       => 'bin/idgames_sync.pl',
+    ABSTRACT            => 'Synchronize a copy of the C<idgames> archive.',
+    #ABSTRACT_FROM       => 'bin/idgames_sync.pl',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
