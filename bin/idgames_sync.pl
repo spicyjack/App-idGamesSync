@@ -2165,7 +2165,7 @@ sub write_stats {
         $output .= qq(- Total bytes synced from archive: );
     }
     $output .= $nf->format_bytes($total_synced_bytes) . qq(\n);
-    $output .= qq(- Total files in /newstuff directory: );
+    $output .= qq(- Total files currently in /newstuff directory: );
     $output .= $args{newstuff_file_count} . qq(\n);
     $output .= qq(- Total old files deleted from /newstuff directory: );
     $output .= $args{deleted_file_count} . qq(\n);
