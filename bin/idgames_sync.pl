@@ -154,7 +154,7 @@ sub new {
     # will show differently on Windows than it does on *NIX (different paths
     # and prefixes)
     if ( $OSNAME eq q(MSWin32) ) {
-        $self->set(q(is_mswin32), 1);
+        $self->set(is_mswin32 => 1);
     }
 
     # dump and bail if we get called with --examples
@@ -2260,15 +2260,15 @@ errors were encountered.
     if ( ! $cfg->defined(q(colorize)) ) {
         # colorize if STDOUT is connected to a terminal
         if ( -t STDOUT ) {
-            $cfg->set(q(colorize), 1);
+            $cfg->set(colorize => 1);
         } else {
-            $cfg->set(q(colorize), 0);
+            $cfg->set(colorize => 0);
         }
         # Unless we're running on Windows, in which case, don't colorize
         # unless --colorize is explicitly used, which would cause this whole
         # block to get skipped
         if ( $cfg->defined(q(is_mswin32)) ) {
-            $cfg->set(q(colorize), 0);
+            $cfg->set(colorize => 0);
         }
     }
 
@@ -2309,16 +2309,16 @@ errors were encountered.
     if ( ! $cfg->defined(q(tempdir)) ) {
         if ( defined $ENV{TEMP} ) {
             # Windows usually sets %TEMP% as well
-            $cfg->set(q(tempdir), $ENV{TEMP});
+            $cfg->set(tempdir => $ENV{TEMP});
             $log->debug(q(Using ENV{TEMP} for tempdir));
         } elsif ( defined $ENV{TMP} ) {
-            $cfg->set(q(tempdir), $ENV{TMP});
+            $cfg->set(tempdir => $ENV{TMP});
             $log->debug(q(Using ENV{TMP} for tempdir));
         } elsif ( defined $ENV{TMPDIR} ) {
-            $cfg->set(q(tempdir), $ENV{TMPDIR});
+            $cfg->set(tempdir => $ENV{TMPDIR});
             $log->debug(q(Using ENV{TMPDIR} for tempdir));
         } else {
-            $cfg->set(q(tempdir), q(/tmp));
+            $cfg->set(tempdir => q(/tmp));
             $log->debug(q(Using '/tmp' for tempdir));
         }
         $log->debug(q(Using ) . $cfg->get(q(tempdir)) . q( for tempdir));
@@ -2350,12 +2350,12 @@ errors were encountered.
         # For *NIX, append a forward slash on to the directory name so other
         # paths don't need the forward slash later on
         if ( $cfg->get(q(path)) !~ /\/$/ ) {
-            $cfg->set(q(path), $cfg->get(q(path)) . q(/));
+            $cfg->set(path => $cfg->get(q(path)) . q(/));
         }
     } else {
         # same for Windows, but append a backslash
         if ( $cfg->get(q(path)) !~ /\\$/ ) {
-            $cfg->set(q(path), $cfg->get(q(path)) . q(\\));
+            $cfg->set(path => $cfg->get(q(path)) . q(\\));
         }
     }
 
@@ -2392,7 +2392,7 @@ errors were encountered.
 
     # skip syncing of dotfiles by default
     if ( ! $cfg->defined(q(dotfiles)) ) {
-        $cfg->set(q(dotfiles), 0);
+        $cfg->set(dotfiles => 0);
     }
 
     my $stats = Runtime::Stats->new(
