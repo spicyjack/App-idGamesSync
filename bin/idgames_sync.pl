@@ -1408,7 +1408,7 @@ C<1> means show dotfiles.  Default is C<0>, don't show dotfiles.
 
 has show_dotfiles => (
     is      => q(ro),
-    isa     => q(Int),
+    isa     => q(Bool),
     default => 0,
 );
 
