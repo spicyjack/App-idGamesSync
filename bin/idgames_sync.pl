@@ -1377,6 +1377,13 @@ use constant {
 
 with qw(Role::Reports);
 
+# FIXME GitHub issue #58 filed, default and allowed report types and formats
+# should live in the Reporter object
+my $allowed_report_types = q(headers:local:archive:size:same);
+my $default_report_types = q(local:size);
+my $default_report_format = q(more);
+my @valid_report_formats = qw(full more simple);
+
 =head3 Attributes
 
 =over
@@ -1436,10 +1443,7 @@ arguments can be one of I<simple>, I<more>, I<full>.
 
 sub BUILD {
     my $self = shift;
-
     my $log = Log::Log4perl->get_logger();
-
-    my @valid_report_formats = qw(full more simple);
 
     # do some validation on the report type here
     my $rf = $self->report_format;
@@ -2219,12 +2223,7 @@ use constant {
     TOTAL_FIELDS=> 9,
 };
 
-### script variables
-# FIXME GitHub issue #58 filed, default and allowed report types and formats
-# should live in the Reporter object
-my $allowed_report_types = q(headers:local:archive:size:same);
-my $default_report_types = q(local:size);
-my $default_report_format = q(more);
+
 
 =head1 DESCRIPTION
 
