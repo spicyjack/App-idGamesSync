@@ -1377,13 +1377,6 @@ use constant {
 
 with qw(Role::Reports);
 
-# FIXME GitHub issue #58 filed, default and allowed report types and formats
-# should live in the Reporter object
-my $allowed_report_types = q(headers:local:archive:size:same);
-my $default_report_types = q(local:size);
-my $default_report_format = q(more);
-my @valid_report_formats = qw(full more simple);
-
 =head3 Attributes
 
 =over
@@ -1397,6 +1390,58 @@ The types of reports to print.
 has report_types => (
     is      => q(ro),
     isa     => q(Str)
+);
+
+# FIXME GitHub issue #58 filed, default and allowed report types and formats
+# should live in the Reporter object
+
+=item default_report_types
+
+The default report types, currently C<size:local>.
+
+=cut
+
+has default_report_types => (
+    is      => q(ro),
+    isa     => q(Str),
+    default => q(local:size),
+);
+
+=item allowed_report_types
+
+A reference to an array of B<allowed> report types.  Specifying a report type
+not on this list will cause the script to exit with an error.
+
+=cut
+
+has allowed_report_types => (
+    is      => q(ro),
+    isa     => q(ArrayRef[Str]),
+    default => sub{qw(headers local archive size same)},
+);
+
+=item default_report_format
+
+The default report format, currently C<more>.
+
+=cut
+
+has default_report_format => (
+    is      => q(ro),
+    isa     => q(Str),
+    default => q(more),
+);
+
+=item valid_report_formats
+
+A reference to an array of "valid" report formats.
+
+=cut
+
+has q(valid_report_formats) => (
+    is      => q(rw),
+    isa     => q(ArrayRef[Str]),
+    default => sub{qw(full more simple)},
 );
 
 =item show_dotfiles
