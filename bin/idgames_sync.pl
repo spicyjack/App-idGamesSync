@@ -1383,41 +1383,53 @@ with qw(Role::Reports);
 
 =item report_types
 
-The types of reports to print.
+A reference to an array containing the types of reports the reporter should
+print.  Defaults to the contents of C<default_report_types> attribute.
 
 =cut
 
 has report_types => (
-    is      => q(ro),
-    isa     => q(Str)
+    is      => q(rw),
+    isa     => q(ArrayRef[Str]),
+    default => sub{ [qw(size local)] },
 );
 
-# FIXME GitHub issue #58 filed, default and allowed report types and formats
-# should live in the Reporter object
+=item report_format
+
+The report format to use when writing reports. Defaults to the C<more> format.
+
+=cut
+
+has report_format => (
+    is      => q(rw),
+    isa     => q(Str),
+    default => q(more),
+);
 
 =item default_report_types
 
-The default report types, currently C<size:local>.
+A reference to an array containing the default report types, currently
+C<size:local>.
 
 =cut
 
 has default_report_types => (
     is      => q(ro),
-    isa     => q(Str),
-    default => q(local:size),
+    isa     => q(ArrayRef[Str]),
+    default => sub{ [qw(size local)] },
 );
 
-=item allowed_report_types
+=item valid_report_types
 
-A reference to an array of B<allowed> report types.  Specifying a report type
+A reference to an array of B<valid> report types.  Specifying a report type
 not on this list will cause the script to exit with an error.
 
 =cut
 
-has allowed_report_types => (
+has valid_report_types => (
     is      => q(ro),
     isa     => q(ArrayRef[Str]),
-    default => sub{qw(headers local archive size same)},
+    default => sub{ [qw(headers local archive size same)] },
 );
 
 =item default_report_format
@@ -1434,14 +1446,15 @@ has default_report_format => (
 
 =item valid_report_formats
 
-A reference to an array of "valid" report formats.
+A reference to an array of B<valid> report formats.  Specifying a report type
+not on this list will cause the script to exit with an error.
 
 =cut
 
 has q(valid_report_formats) => (
     is      => q(rw),
     isa     => q(ArrayRef[Str]),
-    default => sub{qw(full more simple)},
+    default => sub{ [qw(full more simple)] },
 );
 
 =item show_dotfiles
@@ -1468,19 +1481,14 @@ has show_dotfiles => (
 Creates the L<Reporter> object, which is used to write the information about
 local/archived files and directories to C<STDOUT>.
 
-Required arguments:
+Optional arguments:
 
 =over
 
-=item report_types
+=item show_dotfiles
 
-An array reference, containing the types of reports to print, i.e. what
-information you want to display in the report output.
-
-=item report_format
-
-The format of the report.  From least information to most information, the
-arguments can be one of I<simple>, I<more>, I<full>.
+Boolean flag that indicates whether or not to show dotfiles in script output.
+Defaults to C<0>, false.
 
 =back
 
@@ -1489,12 +1497,6 @@ arguments can be one of I<simple>, I<more>, I<full>.
 sub BUILD {
     my $self = shift;
     my $log = Log::Log4perl->get_logger();
-
-    # do some validation on the report type here
-    my $rf = $self->report_format;
-    if ( scalar(grep(/$rf/, @valid_report_formats)) == 0 ) {
-        $log->logdie(qq(Can't create reports using the '$rf' format style));
-    }
 }
 
 =item write_record()
@@ -1533,17 +1535,22 @@ sub write_record {
     # missing files
     my $checkname = $a->name;
     if ( $l->short_status eq IS_MISSING ) {
-        if ( $self->report_types =~ /local/ ) { $write_report_flag = 1; }
+        if ( scalar(grep(/local/, @{$self->report_types})) > 0 ) { 
+            $write_report_flag = 1;
+        }
     }
     # different size files
     if ( $l->short_status eq DIFF_SIZE ) {
-        if ( $self->report_types =~ /size/ && ! $l->is_metafile ) {
+        if ( scalar(grep(/size/, @{$self->report_types})) > 0
+            && ! $l->is_metafile ) {
             $write_report_flag = 1;
         }
     }
     # is a file/directory on the local filesystem
     if ( $l->short_status eq IS_FILE || $l->short_status eq IS_DIR ) {
-        if ( $self->report_types =~ /same/ ) { $write_report_flag = 1; }
+        if ( scalar(grep(/same/, @{$self->report_types})) > 0 ) {
+            $write_report_flag = 1;
+        }
     }
     # is an unknown file on the local filesystem
     if ( $l->short_status eq IS_UNKNOWN ) {
@@ -2403,35 +2410,39 @@ errors were encountered.
         }
     }
 
+    # create the Reporter object
+    my $reporter = Reporter->new( show_dotfiles => $cfg->get(q(dotfiles)) );
+
     ### REPORT TYPES
     # the default report type is now size-local
-    # FIXME GitHub issue #58 filed, default report types should live in the
-    # Reporter object
-    my $report_types = $default_report_types;
+    my @report_types = @{$reporter->default_report_types};
     if ( $cfg->defined(q(size-same)) ) {
-        $report_types = q(size:same);
+        @report_types = qw(size same);
     }
 
     if ( $cfg->defined(q(type)) ) {
         my @reports = @{$cfg->get(q(type))};
         my @requested_types;
         foreach my $type ( @reports ) {
-            if ( $allowed_report_types !~ /$type/i ) {
-                $log->logdie(qq(Report type '$type' is not a valid report));
+            if (scalar(grep(/$type/i, @{$reporter->valid_report_types})) < 1) {
+                $log->logdie(qq(Report type '$type' is not a valid type));
             } else {
                 push(@requested_types, $type);
             }
         }
-        $report_types = join(q(:), @requested_types);
+        @report_types = @requested_types;
     }
 
-
     ### REPORT FORMATS
-    # FIXME GitHub issue #58 filed, default report format should live in the
-    # Reporter object
-    my $report_format = $default_report_format;
+    my $report_format = $reporter->default_report_format;
+    my @valid_report_formats = @{$reporter->valid_report_formats};
     if ( $cfg->defined(q(format)) ) {
         $report_format = $cfg->get(q(format));
+        if (scalar(grep(/$report_format/i,
+            @{$reporter->valid_report_formats})) < 1) {
+                $log->logdie(qq(Report format '$report_format' )
+                    . q(is not a valid format));
+        }
     }
 
     # skip syncing of dotfiles by default
@@ -2444,12 +2455,6 @@ errors were encountered.
         report_format => $report_format
     );
     $stats->start_timer();
-
-    my $report = Reporter->new(
-        report_format   => $report_format,
-        report_types    => $report_types,
-        show_dotfiles   => $cfg->get(q(dotfiles)),
-    );
 
     # a list of files/directories were sync'ed with a mirror, either because
     # they're missing from the local system, or for files, the file is the
@@ -2613,7 +2618,7 @@ errors were encountered.
             # add the file to the filelist
             $idgames_filelist{$local_file->absolute_path}++;
 
-            $report->write_record(
+            $reporter->write_record(
                 archive_obj    => $archive_file,
                 local_obj      => $local_file,
             );
@@ -2689,7 +2694,7 @@ errors were encountered.
                 archive_obj    => $archive_dir,
             );
             $local_dir->stat_local();
-            $report->write_record(
+            $reporter->write_record(
                 archive_obj    => $archive_dir,
                 local_obj      => $local_dir,
             );
@@ -2760,9 +2765,6 @@ errors were encountered.
 
     # check the contents of /newstuff, make sure that files have been deleted
     # if they don't belong there anymore
-    # FIXME redo this so it finds all files in $cfg->get(q(path)), and greps
-    # out the files in /newstuff, unless the user asks to check for extra
-    # files to be deleted in the whole mirror
     my $deleted_file_count = 0;
 
     # all of the files in the local mirror
