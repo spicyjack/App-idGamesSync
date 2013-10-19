@@ -1058,7 +1058,7 @@ sub stat_local {
         $self->mod_time($mtime);
 
         # this only works in File::stat in Perl 5.12.1 or newer
-        #if ( -f $stat ) {
+        #if ( -f $stat )
         # file does exist; what kind of file is it?
         if ( -f $self->absolute_path ) {
             $self->short_type(IS_FILE);
@@ -1087,6 +1087,8 @@ sub stat_local {
             $log->debug($self->name . q( is an unknown file!));
         }
     }
+    $log->debug(q(Short type/status: )
+        . $self->short_type . q(/) . $self->short_status);
 }
 
 =item sync()
@@ -1522,6 +1524,7 @@ sub write_record {
     my $a = $args{archive_obj};
     my $l = $args{local_obj};
 
+
     # whether or not to report on the file
     my $write_report_flag;
 
@@ -1535,27 +1538,35 @@ sub write_record {
     # missing files
     my $checkname = $a->name;
     if ( $l->short_status eq IS_MISSING ) {
-        if ( scalar(grep(/local/, @{$self->report_types})) > 0 ) { 
+        if ( scalar(grep(/local/, @{$self->report_types})) > 0 ) {
+            $log->debug(qq($checkname: missing locally));
             $write_report_flag = 1;
         }
     }
+
     # different size files
     if ( $l->short_status eq DIFF_SIZE ) {
         if ( scalar(grep(/size/, @{$self->report_types})) > 0
             && ! $l->is_metafile ) {
+            $log->debug(qq($checkname: different sizes between archive/local));
             $write_report_flag = 1;
         }
     }
+
     # is a file/directory on the local filesystem
     if ( $l->short_status eq IS_FILE || $l->short_status eq IS_DIR ) {
         if ( scalar(grep(/same/, @{$self->report_types})) > 0 ) {
+            $log->debug(qq($checkname: same size between archive/local));
             $write_report_flag = 1;
         }
     }
+
     # is an unknown file on the local filesystem
     if ( $l->short_status eq IS_UNKNOWN ) {
         $write_report_flag = 1;
+        $log->debug(qq($checkname: is unknown));
     }
+
     # skip dotfiles?
     if ( $l->is_dotfile == 1 && ! $self->show_dotfiles ) {
         $log->debug(q(Found dotfile, but --dotfiles not set, not displaying));
@@ -1622,7 +1633,6 @@ system, in a more verbose three line format; the first line is the name of the
 archive file, second line is the archive file attributes, third line is the
 attributes of the file on the local system, if the file exists.
 
-
 =cut
 
 sub format_more {
@@ -1633,8 +1643,6 @@ sub format_more {
 
     my $l = $args{local_obj};
     my $a = $args{archive_obj};
-
-
 
     my $notes = q();
         if ( length($l->long_status) > 0 ) {
@@ -2432,6 +2440,9 @@ errors were encountered.
         }
         @report_types = @requested_types;
     }
+    $reporter->report_types(\@report_types);
+    $log->debug(q(Report types set to: )
+        . join(":", @{$reporter->report_types}));
 
     ### REPORT FORMATS
     my $report_format = $reporter->default_report_format;
@@ -2444,6 +2455,8 @@ errors were encountered.
                     . q(is not a valid format));
         }
     }
+    $reporter->report_format = $report_format;
+    $log->debug(q(Report format set to: ) . $reporter->report_format);
 
     # skip syncing of dotfiles by default
     if ( ! $cfg->defined(q(dotfiles)) ) {
