@@ -1661,7 +1661,7 @@ $a->parent_path . q(/) . $a->name
   archive: @>>>>>>>>> @>>>>>>> @>>>>>>> @>> @> @<<<< @######## @<<<<<<<<<<<<<<
 $a->perms, $a->owner, $a->group, $a_month, $a_date, $a_year_time, $a->size, $notes
   local:   @>>>>>>>>> @>>>>>>> @>>>>>>> @>> @> @<<<< @######## @<<<<<<<<<<<<<<
-$l->perms, $l->owner, $l->group, $a_month, $a_date, $a_year_time, $l->size, $l->long_status
+$l->perms, $l->owner, $l->group, $l_month, $l_date, $l_year_time, $l->size, $l->long_status
 .
 ### END FORMAT
 
@@ -1739,7 +1739,12 @@ sub split_mod_time {
 
     my $file = $args{file_obj};
     my $file_time = $file->mod_time;
-    my ($month, $date, $year_time) =  split(/ /, $file_time);
+    my ($month, $date, $year_time);
+    if ( $file->mod_time ne q(!!!) ) {
+        ($month, $date, $year_time) =  split(/ /, $file->mod_time);
+    } else {
+        ($month, $date, $year_time) =  qw(!!! !! !!!!!);
+    }
     return ($month, $date, $year_time);
 }
 
