@@ -1313,46 +1313,6 @@ has total_blocks    => (
     isa     => q(Int),
 );
 
-=head2 Role::Reports
-
-A role that is consumed by different modules that generate reports to be
-output by the user.
-
-=cut
-
-#########################
-# package Role::Reports #
-#########################
-package Role::Reports;
-
-use Mouse::Role;
-
-use constant {
-    IS_DIR      => q(D),
-    IS_FILE     => q(F),
-    IS_UNKNOWN  => q(?),
-    IS_MISSING  => q(!),
-    DIFF_SIZE   => q(S),
-};
-
-=head3 Attributes
-
-=over
-
-=item report_format
-
-The format of the report output, i.e. full, simple, more information,
-script-friendly.
-
-=cut
-
-has report_format => (
-    is      => q(ro),
-    isa     => q(Str),
-);
-
-=back
-
 =head2 Reporter
 
 A tool that outputs file/directory information based on the methods used by
@@ -1376,8 +1336,6 @@ use constant {
     IS_MISSING  => q(!),
     DIFF_SIZE   => q(S),
 };
-
-with qw(Role::Reports);
 
 =head3 Attributes
 
