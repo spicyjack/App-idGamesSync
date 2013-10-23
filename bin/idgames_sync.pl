@@ -725,7 +725,25 @@ sub is_dotfile {
 =item is_metafile()
 
 Tests to see if the current file/directory is a "metafile", or a
-meta-information file.  Returns C<0> false if the current object is not a
+meta-information file.  The current list of "meta" files includes the
+following (with Perl-style regular expressions showing what search text is
+used to match meta filenames):
+
+=over
+
+=item ls-laR.gz
+
+=item LAST.\d+\w+
+
+=item fullsort.gz
+
+=item REJECTS
+
+=item README
+
+=back
+
+Returns C<0> false if the current object is not a
 dotfile, or C<1> true if the current object I<is> a dotfile.
 
 =cut
@@ -1636,8 +1654,6 @@ Reports on the difference between the archive file and the file on the local
 system, in a very verbose three line format; the first line is the name of the
 archive file, each subsequent line displays one attribute of both the archive
 file and the local file, if the local file exists.
-
-=back
 
 =cut
 
