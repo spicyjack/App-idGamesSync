@@ -10,7 +10,7 @@ our $copyright =
 
 =head1 NAME
 
-idgames_sync.pl - Synchronize a copy of the C<idgames> archive.
+idgames_sync.pl - Synchronize a copy of the C<idGames> archive.
 
 =head1 VERSION
 
@@ -26,7 +26,7 @@ our $our_name = basename $0;
 
 =head1 SYNOPSIS
 
-Create or update a copy of the C<idgames> archive on the local host.
+Create or update a copy of the C<idGames> archive on the local host.
 
 =cut
 
@@ -76,7 +76,7 @@ our @options = (
  --version          Shows script version, then exits
  -n|--dry-run       Don't sync content, explain script actions instead
 
- -p|--path          Path to the local copy of the idgames archive
+ -p|--path          Path to the local copy of the idGames archive
  -t|--type          Report type(s) to use for reporting (see --morehelp)
  -f|--format        Output format, [full|more|simple] (see --morehelp)
  -u|--url           Use a specific URL instead of a random mirror
@@ -92,17 +92,17 @@ our @options = (
 
 =head1 DESCRIPTION
 
-Using a current C<ls-lR.gz> listing file synchronized from an C<idgames> archive
-mirror site, synchronizes an existing copy of the C<idgames> mirror on the
-local host, or creates a new copy of the mirror on the local host if a copy of
-the mirror does not already exist.
+Using a current C<ls-lR.gz> listing file synchronized from an C<idGames>
+archive mirror site, synchronizes an existing copy of the C<idGames> mirror on
+the local host, or creates a new copy of the mirror on the local host if a
+copy of the mirror does not already exist.
 
 Script normally exits with a 0 status code, or a non-zero status code if any
 errors were encountered.
 
 =head1 OBJECTS
 
-=head2 idGames::Sync::Config
+=head2 App::idGamesSync::Config
 
 Configure/manage script options using L<Getopt::Long>.
 
@@ -112,7 +112,7 @@ Configure/manage script options using L<Getopt::Long>.
 
 =cut
 
-package idGames::Sync::Config;
+package App::idGamesSync::Config;
 
 use strict;
 use warnings;
@@ -142,7 +142,7 @@ sub new {
     # dump and bail if we get called with --help
     if ( $self->get(q(version)) ) {
         print __FILE__
-            . qq(: synchronize files from 'idgames' mirrors to local host\n);
+            . qq(: synchronize files from 'idGames' mirrors to local host\n);
         print qq(version: $VERSION\n);
         print qq(copyright: $copyright\n);
         print qq|license: Same terms as Perl (Perl Artistic/GPLv1 or later)\n|;
@@ -487,17 +487,17 @@ sub defined {
 
 =back
 
-=head2 Role::Dir::Attribs
+=head2 App::idGamesSync::Role::DirAttribs
 
 A role that contains attributes for a local or remote directory.
 Currently, this is only the total blocks used by this directory.
 
 =cut
 
-##############################
-# package Role::Dir::Attribs #
-##############################
-package Role::Dir::Attribs;
+##############################################
+# package App::idGamesSync::Role::DirAttribs #
+##############################################
+package App::idGamesSync::Role::DirAttribs;
 
 use Mouse::Role;
 
@@ -519,17 +519,17 @@ has total_blocks    => (
     isa     => q(Int),
 );
 
-=head2 Role::FileDir::Attribs
+=head2 App::idGamesSync::Role::FileDirAttribs
 
 A role that contains attributes for a local or remote file or directory.
 Things like filename, full path, owner/group, permissions, size, etc.
 
 =cut
 
-##################################
-# package Role::FileDir::Attribs #
-##################################
-package Role::FileDir::Attribs;
+##################################################
+# package App::idGamesSync::Role::FileDirAttribs #
+##################################################
+package App::idGamesSync::Role::FileDirAttribs;
 
 use Mouse::Role;
 
@@ -666,7 +666,7 @@ has metafiles     => (
 =item wad_dirs
 
 A regular expression that describes directories where C<WAD> files are stored
-inside of the C<idgames> Mirror.
+inside of the C<idGames> Mirror.
 
 =cut
 
@@ -775,17 +775,17 @@ sub is_wad_dir {
 
 =back
 
-=head2 Role::LocalFileDir
+=head2 App::idGamesSync::Role::LocalFileDir
 
 Methods and attributes used for interacting with a file or directory on the
 local filesystem.
 
 =cut
 
-##############################
-# package Role::LocalFileDir #
-##############################
-package Role::LocalFileDir;
+################################################
+# package App::idGamesSync::Role::LocalFileDir #
+################################################
+package App::idGamesSync::Role::LocalFileDir;
 
 use Mouse::Role;
 use Date::Format;
@@ -806,14 +806,13 @@ use constant {
     DIFF_SIZE   => q(S),
 };
 
-
 =head3 Attributes
 
 =over
 
 =item opts_path
 
-The path to the local C</idgames> archive passed in by the user.
+The path to the local C</idGames> archive passed in by the user.
 
 =cut
 
@@ -901,7 +900,7 @@ has long_status => (
 =item url_path
 
 The path that can be used to build a valid URL to the resource on any
-C<idgames> mirror server.  This path always has forward slashes, as opposed to
+C<idGames> mirror server.  This path always has forward slashes, as opposed to
 C<short_path>, which has slashes based on what platform the script is
 currently running on.
 
@@ -944,11 +943,11 @@ has notes => (
 
 =item new() (BUILD)
 
-Creates an object that has consumed the L<Role::LocalFileDir> role.  This
-object would be used to keep track of attributes of a local file or directory.
-Sets up different "shortcuts", or file/directory attributes that would be
-commonly used when interacting with this object (aboslute path, parent path,
-short name, etc.)
+Creates an object that has consumed the
+L<App::idGamesSync::Role::LocalFileDir> role.  This object would be used to
+keep track of attributes of a local file or directory.  Sets up different
+"shortcuts", or file/directory attributes that would be commonly used when
+interacting with this object (aboslute path, parent path, short name, etc.)
 
 Required arguments:
 
@@ -956,7 +955,7 @@ Required arguments:
 
 =item opts_path
 
-The path on the local filesystem to the C<idgames> archive directory.
+The path on the local filesystem to the C<idGames> archive directory.
 
 =item archive_obj
 
@@ -1097,8 +1096,8 @@ Syncs a remote file or directory to the local system.  Local directories are
 created, local files are synchronized from the remote system.  Returns C<1> if
 the file was synchronized (downloaded to the local system as a tempfile and
 renamed with the same name and location in the archive as the copy on the
-mirror), or in the case of directories, the directory was created successfully,
-returns a C<0> otherwise.
+mirror), or in the case of directories, the directory was created
+successfully, returns a C<0> otherwise.
 
 =cut
 
@@ -1112,7 +1111,7 @@ sub sync {
 
     my $lwp = $args{lwp};
     $log->debug(q(Syncing file/dir ') . $self->name . q('));
-    if ( ref($self) eq q(Local::File) ) {
+    if ( ref($self) eq q(App::idGamesSync::LocalFile) ) {
         # check to see if this is one of the metadata files, or a file in the
         # /newstuff directory; if so, sync it from the master mirror, as the
         # other mirrors may not have the file sync'ed yet
@@ -1135,7 +1134,7 @@ sub sync {
                 unless (move($temp_file, $self->absolute_path ));
         }
         return 1;
-    } elsif ( ref($self) eq q(Local::Directory) ) {
+    } elsif ( ref($self) eq q(App::idGamesSync::LocalDirectory) ) {
         if ( -e $self->absolute_path ) {
             $log->debug(qq(Directory ) . $self->absolute_path
                 . qq( already exists));
@@ -1216,83 +1215,86 @@ has is_newstuff => (
 
 =back
 
-=head2 Archive::File
+=head2 App::idGamesSync::ArchiveFile
 
 A file synchronized/to be synchronized from the mirror.  This object inherits
-from the L<Role::FileDir::Attribs> role.  See that role for a complete list of
-inherited attributes and methods.
+from the L<App::idGamesSync::Role::FileDirAttribs> role.  See that role for a
+complete list of inherited attributes and methods.
 
 =cut
 
-#########################
-# package Archive::File #
-#########################
-package Archive::File;
+#########################################
+# package App::idGamesSync::ArchiveFile #
+#########################################
+package App::idGamesSync::ArchiveFile;
 
 use Mouse;
 
-with qw(Role::FileDir::Attribs);
+with qw(App::idGamesSync::Role::FileDirAttribs);
 
-=head2 Archive::Directory
+=head2 App::idGamesSync::ArchiveDirectory
 
 A directory synchronized/to be synchronized from the mirror.  This object
-inherits from the L<Role::FileDir::Attribs> and L<Role::Dir::Attribs> roles.
-See those roles for a complete list of inherited attributes and methods.
+inherits from the L<App::idGamesSync::Role::FileDirAttribs> and
+L<App::idGamesSync::Role::DirAttribs> roles.  See those roles for a complete
+list of inherited attributes and methods.
 
 =cut
 
-##############################
-# package Archive::Directory #
-##############################
-package Archive::Directory;
+##############################################
+# package App::idGamesSync::ArchiveDirectory #
+##############################################
+package App::idGamesSync::ArchiveDirectory;
 
 use Mouse;
 
 with qw(
-    Role::FileDir::Attribs
-    Role::Dir::Attribs
+    App::idGamesSync::Role::FileDirAttribs
+    App::idGamesSync::Role::DirAttribs
 );
 
-=head2 Local::File
+=head2 App::idGamesSync::LocalFile
 
 A file on the local filesystem.  This object inherits from the
-L<Role::FileDir::Attribs> and L<Role::LocalFileDir> roles.  See those
-roles for a complete list of inherited attributes and methods.
+L<App::idGamesSync::Role::FileDirAttribs> and
+L<App::idGamesSync::Role::LocalFileDir> roles.  See those roles for a complete
+list of inherited attributes and methods.
 
 =cut
 
-#######################
-# package Local::File #
-#######################
-package Local::File;
+#######################################
+# package App::idGamesSync::LocalFile #
+#######################################
+package App::idGamesSync::LocalFile;
 
 use Mouse;
 
 with qw(
-    Role::FileDir::Attribs
-    Role::LocalFileDir
+    App::idGamesSync::Role::FileDirAttribs
+    App::idGamesSync::Role::LocalFileDir
 );
 
-=head2 Local::Directory
+=head2 App::idGamesSync::LocalDirectory
 
 A directory on the local filesystem.  This object inherits from the
-L<Role::Dir::Attribs>, L<Role::FileDir::Attribs> and
-L<Role::LocalFileDir> roles.  See those roles for a complete list of
-inherited attributes and methods.
+L<App::idGamesSync::Role::DirAttribs>,
+L<App::idGamesSync::Role::FileDirAttribs> and
+L<App::idGamesSync::Role::LocalFileDir> roles.  See those roles for a complete
+list of inherited attributes and methods.
 
 =cut
 
-############################
-# package Local::Directory #
-############################
-package Local::Directory;
+############################################
+# package App::idGamesSync::LocalDirectory #
+############################################
+package App::idGamesSync::LocalDirectory;
 
 use Mouse;
 
 with qw(
-    Role::Dir::Attribs
-    Role::FileDir::Attribs
-    Role::LocalFileDir
+    App::idGamesSync::Role::DirAttribs
+    App::idGamesSync::Role::FileDirAttribs
+    App::idGamesSync::Role::LocalFileDir
 );
 
 =head3 Attributes
@@ -1313,20 +1315,20 @@ has total_blocks    => (
     isa     => q(Int),
 );
 
-=head2 Reporter
+=head2 App::idGamesSync::Reporter
 
 A tool that outputs file/directory information based on the methods used by
 the caller, i.e.  if there is files missing on the local system, then the
-L</"missing_local"> method would be called and the L<Reporter> object will
-display the information about the missing file.  This object consumes the
-L<Role::Reports> role.
+L</"missing_local"> method would be called and the
+L<App::idGamesSync::Reporter> object will display the information about the
+missing file.  This object consumes the L<Role::Reports> role.
 
 =cut
 
-####################
-# package Reporter #
-####################
-package Reporter;
+######################################
+# package App::idGamesSync::Reporter #
+######################################
+package App::idGamesSync::Reporter;
 
 use Mouse;
 use constant {
@@ -1438,8 +1440,8 @@ has show_dotfiles => (
 
 =item new (BUILD)
 
-Creates the L<Reporter> object, which is used to write the information about
-local/archived files and directories to C<STDOUT>.
+Creates the L<App::idGamesSync::Reporter> object, which is used to write the
+information about local/archived files and directories to C<STDOUT>.
 
 Optional arguments:
 
@@ -1761,7 +1763,7 @@ has q(user_agent) => (
 
 =item exclude_urls
 
-URLs to exclude from the built in list of C<idgames> mirror servers.  Use this
+URLs to exclude from the built in list of C<idGames> mirror servers.  Use this
 option to skip mirror servers that are not functioning.
 
 =cut
@@ -2013,7 +2015,7 @@ sub fetch {
 
 =item get_mirror_list()
 
-Returns a list of C<idgames> mirror servers.
+Returns a list of C<idGames> mirror servers.
 
 =cut
 
@@ -2023,7 +2025,7 @@ sub get_mirror_list {
 
 =back
 
-=head2 Runtime::Stats
+=head2 App::idGamesSync::RuntimeStats
 
 An object that keeps different types of statistics about script execution.
 Among other things, this object will help keep track of:
@@ -2044,10 +2046,10 @@ Among other things, this object will help keep track of:
 
 =cut
 
-##########################
-# package Runtime::Stats #
-##########################
-package Runtime::Stats;
+##########################################
+# package App::idGamesSync::RuntimeStats #
+##########################################
+package App::idGamesSync::RuntimeStats;
 use Mouse;
 use Number::Format; # pretty output of bytes
 use Time::HiRes qw( gettimeofday tv_interval );
@@ -2260,7 +2262,7 @@ errors were encountered.
 
     # creating a Config object will check for things like '--help',
     # '--examples', and '--morehelp'
-    my $cfg = idGames::Sync::Config->new();
+    my $cfg = App::idGamesSync::Config->new();
 
     # parent directory
     my $parent = q();
@@ -2381,8 +2383,9 @@ errors were encountered.
         }
     }
 
-    # create the Reporter object
-    my $reporter = Reporter->new( show_dotfiles => $cfg->get(q(dotfiles)) );
+    # create the App::idGamesSync::Reporter object
+    my $reporter = App::idGamesSync::Reporter->new(
+        show_dotfiles => $cfg->get(q(dotfiles)) );
 
     ### REPORT TYPES
     # the default report type is now size-local
@@ -2426,7 +2429,7 @@ errors were encountered.
         $cfg->set(dotfiles => 0);
     }
 
-    my $stats = Runtime::Stats->new(
+    my $stats = App::idGamesSync::RuntimeStats->new(
         dry_run       => $cfg->defined(q(dry-run)),
         report_format => $report_format
     );
@@ -2569,7 +2572,7 @@ errors were encountered.
             }
 
             $log->debug(qq(Creating archive file object '$name_field'));
-            my $archive_file = Archive::File->new(
+            my $archive_file = App::idGamesSync::ArchiveFile->new(
                 parent_path     => $current_dir,
                 perms           => $fields[PERMS],
                 hardlinks       => $fields[HARDLINKS],
@@ -2582,7 +2585,7 @@ errors were encountered.
             );
             $total_archive_size += $archive_file->size;
             $log->debug(qq(Creating local file object '$name_field'));
-            my $local_file = Local::File->new(
+            my $local_file = App::idGamesSync::LocalFile->new(
                 opts_path   => $cfg->get(q(path)),
                 archive_obj => $archive_file,
                 is_mswin32  => $cfg->defined(q(is_mswin32)),
@@ -2652,7 +2655,7 @@ errors were encountered.
                 next IDGAMES_LINE;
             }
             $log->debug(qq(Creating archive dir object '$name_field'));
-            my $archive_dir = Archive::Directory->new(
+            my $archive_dir = App::idGamesSync::ArchiveDirectory->new(
                 parent_path     => $current_dir,
                 perms           => $fields[PERMS],
                 hardlinks       => $fields[HARDLINKS],
@@ -2665,7 +2668,7 @@ errors were encountered.
                 total_blocks    => 0,
             );
             $log->debug(qq(Creating local dir object '$name_field'));
-            my $local_dir = Local::Directory->new(
+            my $local_dir = App::idGamesSync::LocalDirectory->new(
                 opts_path       => $cfg->get(q(path)),
                 archive_obj    => $archive_dir,
             );
@@ -2755,7 +2758,7 @@ errors were encountered.
         $log->debug(q(There are currently ) . scalar(keys(%idgames_filelist))
             . q( files on the 'idgames' Archive mirrors));
         $log->debug(q(There are currently ) . scalar(@local_idgames_files)
-            . q( files in the local copy of 'idgames' archive));
+            . q( files in the local copy of 'idGames' archive));
         @local_file_check = @local_idgames_files;
     } else {
         $log->debug(q(Checking /newstuff for files to delete));
