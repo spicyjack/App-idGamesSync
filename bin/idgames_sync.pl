@@ -407,7 +407,7 @@ MOREHELP
 =item get($key)
 
 Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<JenkBuilder::Config> object.
+key does not exist in the L<App::idGamesSync::Config> object.
 
 =cut
 
@@ -423,9 +423,9 @@ sub get {
 
 =item set(key => $value)
 
-Sets in the L<JenkBuilder::Config> object the key/value pair passed in
+Sets in the L<App::idGamesSync::Config> object the key/value pair passed in
 as arguments.  Returns the old value if the key already existed in the
-L<JenkBuilder::Config> object, or C<undef> otherwise.
+L<App::idGamesSync::Config> object, or C<undef> otherwise.
 
 =cut
 
