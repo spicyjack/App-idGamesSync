@@ -1724,17 +1724,17 @@ sub split_mod_time {
     return ($month, $date, $year_time);
 }
 
-=head2 LWP::Wrapper
+=head2 App::idGamesSync::LWPWrapper
 
 A wrapper around LWP::UserAgent, which handles fetching files via HTTP/FTP and
 then handling response codes from servers, if any.
 
 =cut
 
-########################
-# package LWP::Wrapper #
-########################
-package LWP::Wrapper;
+########################################
+# package App::idGamesSync::LWPWrapper #
+########################################
+package App::idGamesSync::LWPWrapper;
 
 use File::Temp;
 use LWP::UserAgent;
@@ -2344,8 +2344,8 @@ errors were encountered.
     }
 
     # set a temporary directory; this directory is used when downloading
-    # files, LWP::Wrapper downloads to the file directly instead of
-    # downloading to an object in memory
+    # files, App::idGamesSync::LWPWrapper downloads to the file directly
+    # instead of downloading to an object in memory
     if ( ! $cfg->defined(q(tempdir)) ) {
         if ( defined $ENV{TEMP} ) {
             # Windows usually sets %TEMP% as well
@@ -2363,7 +2363,7 @@ errors were encountered.
         }
         $log->debug(q(Using ) . $cfg->get(q(tempdir)) . q( for tempdir));
     }
-    my $lwp = LWP::Wrapper->new(
+    my $lwp = App::idGamesSync::LWPWrapper->new(
         base_url        => $cfg->get(q(url)),
         exclude_urls    => \@exclude_urls,
         tempdir         => $cfg->get(q(tempdir)),
