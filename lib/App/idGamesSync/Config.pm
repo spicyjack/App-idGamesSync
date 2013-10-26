@@ -1,13 +1,17 @@
+####################################
+# package App::idGamesSync::Config #
+####################################
 package App::idGamesSync::Config;
+=head1 App::idGamesSync::Config
+
+Configure/manage script options using L<Getopt::Long>.
+
+=cut
+
 use strict;
 use warnings;
 use English qw( -no_match_vars );
 use Mouse;
-use Pod::Usage; # prints POD docs when --help is called
-
-=head1 App::idGamesSync::Config
-
-Configure/manage script options using L<Getopt::Long>.
 
 =head2 Attributes
 
@@ -148,49 +152,3 @@ sub defined {
 }
 
 1;
-
-=head1 AUTHOR
-
-Brian Manning, C<< <brian at xaoc dot org> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to
-L<https://github.com/spicyjack/App-idGamesSync/issues>.  I will be notified,
-and then you'll automatically be notified of progress on your bug as I make
-changes.
-
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-perldoc idgames_sync.pl
-
-You can also look for information at:
-
-=over 4
-
-=item * App::idGamesSync GitHub project page
-
-L<https://github.com/spicyjack/App-idGamesSync>
-
-=item * App::idGamesSync GitHub issues page
-
-L<https://github.com/spicyjack/App-idGamesSync/issues>
-
-=back
-
-=head1 ACKNOWLEDGEMENTS
-
-Perl, the Doom Wiki L<http://www.doomwiki.org> for lots of the documentation,
-all of the various Doom source porters, and id Software for releasing the
-source code for the rest of us to make merry mayhem with.
-
-=head1 COPYRIGHT & LICENSE
-
-Copyright (c) 2013 Brian Manning, all rights reserved.
-
-This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
-
-=cut
