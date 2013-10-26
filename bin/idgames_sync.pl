@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 
-use strict;
-use warnings;
+package main;
 our $copyright =
     q|Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>|;
 
@@ -19,6 +18,35 @@ Version v0.0.7
 =cut
 
 use version; our $VERSION = qv('0.0.7');
+
+### external packages
+use Date::Format; # strftime
+#use Devel::Size; # for profiling filelist hashes (/newstuff, archive)
+use Digest::MD5; # comparing the ls-laR.gz files
+use File::Copy;
+use File::Find::Rule;
+use File::stat;
+use Getopt::Long;
+use IO::File;
+use IO::Uncompress::Gunzip qw($GunzipError);
+use Log::Log4perl qw(get_logger :no_extra_logdie_message);
+use Mouse; # sets strict and warnings
+use Pod::Usage; # prints POD docs when --help is called
+
+use Data::Dumper;
+$Data::Dumper::Indent = 1;
+$Data::Dumper::Sortkeys = 1;
+$Data::Dumper::Terse = 1;
+
+### local packages
+use App::idGamesSync::ArchiveDirectory;
+use App::idGamesSync::ArchiveFile;
+use App::idGamesSync::Config;
+use App::idGamesSync::LocalDirectory;
+use App::idGamesSync::LocalFile;
+use App::idGamesSync::LWPWrapper;
+use App::idGamesSync::Reporter;
+use App::idGamesSync::RuntimeStats;
 
 # shortcut to get the name of the file this script lives in
 use File::Basename;
@@ -92,102 +120,21 @@ our @options = (
 
 =head1 DESCRIPTION
 
-Using a current C<ls-lR.gz> listing file synchronized from an C<idGames>
-archive mirror site, synchronizes an existing copy of the C<idGames> mirror on
-the local host, or creates a new copy of the mirror on the local host if a
-copy of the mirror does not already exist.
+Using a current C<ls-lR.gz> listing file downloaded from an C<idGames>
+archive mirror site, this script synchronizes files on the local system with
+files stored on an C<idGames> mirror, or creates a new copy (with the
+C<--create-mirror> switch) of the mirror on the local host if a copy does not
+already exist.
 
-Script normally exits with a 0 status code, or a non-zero status code if any
-errors were encountered.
-
-=head1 OBJECTS
-
-=head2 App::idGamesSync::Config
-
-Configure/manage script options using L<Getopt::Long>.
-
-=head3 Methods
-
-=over
+This script normally exits with a 0 status code, or a non-zero status code if
+any errors were encountered.
 
 =cut
 
-package App::idGamesSync::Config;
-
-use strict;
-use warnings;
-use English qw( -no_match_vars );
-use Pod::Usage; # prints POD docs when --help is called
-
-sub new {
-    my $class = shift;
-
-    my $self = bless ({}, $class);
-
-    # script arguments
-    my %args;
-
-    # parse the command line arguments (if any)
-    my $parser = Getopt::Long::Parser->new();
-
-    # pass in a reference to the args hash as the first argument
-    $parser->getoptions( \%args, @options );
-
-    # assign the args hash to this object so it can be reused later on
-    $self->{_args} = \%args;
-
-    # dump and bail if we get called with --help
-    if ( $self->get(q(help)) ) { pod2usage(-exitstatus => 0); }
-
-    # dump and bail if we get called with --help
-    if ( $self->get(q(version)) ) {
-        print __FILE__
-            . qq(: synchronize files from 'idGames' mirrors to local host\n);
-        print qq(version: $VERSION\n);
-        print qq(copyright: $copyright\n);
-        print qq|license: Same terms as Perl (Perl Artistic/GPLv1 or later)\n|;
-        exit 0;
-    }
-
-    # set a flag if we're running on 'MSWin32'
-    # this needs to be set before possibly showing examples because examples
-    # will show differently on Windows than it does on *NIX (different paths
-    # and prefixes)
-    if ( $OSNAME eq q(MSWin32) ) {
-        $self->set(is_mswin32 => 1);
-    }
-
-    # dump and bail if we get called with --examples
-    if ( $self->get(q(examples)) ) {
-        $self->show_examples();
-        exit 0;
-    }
-
-    # dump and bail if we get called with --morehelp
-    if ( $self->get(q(morehelp)) ) {
-        $self->show_morehelp();
-        exit 0;
-    }
-
-
-    # return this object to the caller
-    return $self;
-}
-
-=item show_examples()
-
-Show examples of script usage.
-
-=cut
-
-sub show_examples {
-    my $self = shift;
-
-
-    ### WINDOWS EXAMPLES ###
-    if ( $self->defined(q(is_mswin32)) ) {
-
-        print <<"WIN_EXAMPLES";
+########################
+### WINDOWS EXAMPLES ###
+########################
+    our $win32_examples = <<"WIN32_EXAMPLES";
 
  =-=-= $our_name - $VERSION - USAGE EXAMPLES =-=-=
 
@@ -250,10 +197,12 @@ sub show_examples {
  # Show the list of mirror servers embedded into this script, then exit
  $our_name --show-mirrors
 
-WIN_EXAMPLES
+WIN32_EXAMPLES
 
-    } else {
-        print <<"NIX_EXAMPLES";
+####################
+### NIX EXAMPLES ###
+####################
+    our $nix_examples = <<"NIX_EXAMPLES";
 
  =-=-= $our_name - $VERSION - USAGE EXAMPLES =-=-=
 
@@ -318,19 +267,10 @@ WIN_EXAMPLES
 
 NIX_EXAMPLES
 
-    }
-}
-
-=item show_morehelp()
-
-Show more help information on how to use the script and how the script
-functions.
-
-=cut
-
-sub show_morehelp {
-
-print <<MOREHELP;
+################
+### MOREHELP ###
+################
+    my $morehelp = <<MOREHELP;
 
  =-=-= $our_name - $VERSION - More Help Screen =-=-=
 
@@ -402,123 +342,10 @@ print <<MOREHELP;
  The default output format is "more".
 
 MOREHELP
-}
 
-=item get($key)
-
-Returns the scalar value of the key passed in as C<key>, or C<undef> if the
-key does not exist in the L<App::idGamesSync::Config> object.
-
-=cut
-
-sub get {
-    my $self = shift;
-    my $key = shift;
-    # turn the args reference back into a hash with a copy
-    my %args = %{$self->{_args}};
-
-    if ( exists $args{$key} ) { return $args{$key}; }
-    return undef;
-}
-
-=item set(key => $value)
-
-Sets in the L<App::idGamesSync::Config> object the key/value pair passed in
-as arguments.  Returns the old value if the key already existed in the
-L<App::idGamesSync::Config> object, or C<undef> otherwise.
-
-=cut
-
-sub set {
-    my $self = shift;
-    my $key = shift;
-    my $value = shift;
-    # turn the args reference back into a hash with a copy
-    my %args = %{$self->{_args}};
-
-    if ( exists $args{$key} ) {
-        my $oldvalue   = $args{$key};
-        $args{$key}    = $value;
-        $self->{_args} = \%args;
-        return $oldvalue;
-    } else {
-        $args{$key}    = $value;
-        $self->{_args} = \%args;
-    } # if ( exists $args{$key} )
-    return undef;
-}
-
-=item get_args( )
-
-Returns a hash containing the parsed script arguments.
-
-=cut
-
-sub get_args {
-    my $self = shift;
-    # hash-ify the return arguments
-    return %{$self->{_args}};
-}
-
-=item defined($key)
-
-Returns "true" (C<1>) if the value for the key passed in as C<key> is
-C<defined>, and "false" (C<0>) if the value is undefined, or the key doesn't
-exist.
-
-=back
-
-=cut
-
-sub defined {
-    my $self = shift;
-    my $key = shift;
-    # turn the args reference back into a hash with a copy
-    my %args = %{$self->{_args}};
-
-    # Can't use Log4perl here, since it hasn't been set up yet
-    if ( exists $args{$key} ) {
-        #warn qq(exists: $key\n);
-        if ( defined $args{$key} ) {
-            #warn qq(defined: $key; ) . $args{$key} . qq(\n);
-            return 1;
-        }
-    }
-    return 0;
-}
-
-################
-# package main #
-################
-package main;
-
-### external packages
-use Date::Format; # strftime
-use Devel::Size; # for profiling filelist hashes (/newstuff, archive)
-use Digest::MD5; # comparing the ls-laR.gz files
-use English;
-use File::Copy;
-use File::Find::Rule;
-use File::stat;
-use Getopt::Long;
-use IO::File;
-use IO::Uncompress::Gunzip qw($GunzipError);
-use Log::Log4perl qw(get_logger :no_extra_logdie_message);
-#use LWP::UserAgent;
-use Mouse; # sets strict and warnings
-use Data::Dumper;
-$Data::Dumper::Indent = 1;
-$Data::Dumper::Sortkeys = 1;
-$Data::Dumper::Terse = 1;
-
-### local packages
-use App::idGamesSync::ArchiveDirectory;
-use App::idGamesSync::ArchiveFile;
-use App::idGamesSync::LocalDirectory;
-use App::idGamesSync::LocalFile;
-use App::idGamesSync::LWPWrapper;
-use App::idGamesSync::Reporter;
-use App::idGamesSync::RuntimeStats;
+###################
+### MAIN SCRIPT ###
+###################
 
 use constant {
     DEBUG_LOOPS => 50,
@@ -534,21 +361,41 @@ use constant {
     TOTAL_FIELDS=> 9,
 };
 
-
-
-=head1 DESCRIPTION
-
-Script normally exits with a 0 status code, or a non-zero status code if any
-errors were encountered.
-
-=cut
-
     # force writes in output to STDOUT
     $| = 1;
 
     # creating a Config object will check for things like '--help',
     # '--examples', and '--morehelp'
-    my $cfg = App::idGamesSync::Config->new();
+    my $cfg = App::idGamesSync::Config->new(options => \@options);
+
+    # dump and bail if we get called with --help
+    if ( $cfg->defined(q(help)) ) { pod2usage(-exitstatus => 0); }
+
+    # dump and bail if we get called with --help
+    if ( $cfg->defined(q(version)) ) {
+        print $our_name
+            . qq(: synchronize files from 'idGames' mirrors to local host\n);
+        print qq(version: $VERSION\n);
+        print qq(copyright: $copyright\n);
+        print qq|license: Same terms as Perl (Perl Artistic/GPLv1 or later)\n|;
+        exit 0;
+    }
+
+    # dump and bail if we get called with --examples
+    if ( $cfg->defined(q(examples)) ) {
+        if ( $cfg->defined(q(is_mswin32)) ) {
+            print $win32_examples;
+        } else {
+            print $nix_examples;
+        }
+        exit 0;
+    }
+
+    # dump and bail if we get called with --morehelp
+    if ( $cfg->defined(q(morehelp)) ) {
+        print $morehelp;
+        exit 0;
+    }
 
     # parent directory
     my $parent = q();
