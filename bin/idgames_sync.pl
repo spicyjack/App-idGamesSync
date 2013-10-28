@@ -752,22 +752,27 @@ use constant {
                 # used
                 if (! ($local_file->is_wad_dir
                     || $local_file->is_metafile
-                    || $local_file->is_newstuff)
-                    && ! $cfg->defined(q(sync-all))){
-                    $log->debug(q(Non-WAD file needs sync, missing --sync-all));
-                    $non_wads{$local_file->absolute_path}++;
-                    next IDGAMES_LINE;
+                    || $local_file->is_newstuff) ) {
+                    if ( ! $cfg->defined(q(sync-all))){
+                        $log->debug(
+                            q(Non-WAD file needs sync, missing --sync-all));
+                        $non_wads{$local_file->absolute_path}++;
+                        next IDGAMES_LINE;
+                    }
                 }
+                # write the record, anything past this point will be sync'ed
+                # unless --dry-run is set
+                $reporter->write_record(
+                    archive_obj    => $archive_file,
+                    local_obj      => $local_file,
+                );
                 if ( $cfg->defined(q(dry-run)) ) {
                     $log->debug(q(Needs sync, dry-run set; parsing next line));
                     push(@synced_files, $archive_file);
                     next IDGAMES_LINE;
                 } else {
                     # write the record of the file if sync was successful
-                    $reporter->write_record(
-                        archive_obj    => $archive_file,
-                        local_obj      => $local_file,
-                    );
+
                     my $sync_status = $local_file->sync( lwp => $lwp );
                     if ( $sync_status ) {
                         # add the file to the list of synced files
@@ -938,15 +943,22 @@ use constant {
     # stop the timer prior to calculating stats
     $stats->stop_timer();
 
-    # calc stats and write them out
-    $stats->write_stats(
+    my %stats = (
         total_synced_files      => \@synced_files,
         total_archive_files     => scalar(keys(%idgames_filelist)),
         total_archive_size      => $total_archive_size,
         newstuff_file_count     => scalar(keys(%newstuff_dir)),
         newstuff_deleted_count  => $deleted_file_count,
-        non_wads_file_count     => scalar(keys(%non_wads)),
     );
+
+    # if --sync-all is called, then %non_wads will be empty; don't display it
+    # in that case
+    if ( scalar(keys(%non_wads)) > 0 ) {
+        $stats{non_wad_file_count} = scalar(keys(%non_wads));
+    }
+
+    # calc stats and write them out
+    $stats->write_stats(%stats);
     exit 0;
 
 =head1 AUTHOR
