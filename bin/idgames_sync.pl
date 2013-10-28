@@ -670,9 +670,13 @@ use constant {
     $log->info(qq(ls-laR.gz uncompressed size: ) . length($buffer));
 
     ### PARSE ls-laR.gz FILE ###
+    # list of all of the files in the idGames filelist
     my %idgames_filelist;
-    my $current_dir;
+    # list of all of the files in /newstuff
     my %newstuff_dir;
+    # list of all of the files in non-WAD directories that need to be synced
+    my %non_wads;
+    my $current_dir;
     IDGAMES_LINE: foreach my $line ( split(/\n/, $buffer) ) {
         # skip blank lines
         next if ( $line =~ /^$/ );
@@ -730,10 +734,6 @@ use constant {
             # add the file to the filelist
             $idgames_filelist{$local_file->absolute_path}++;
 
-            $reporter->write_record(
-                archive_obj    => $archive_file,
-                local_obj      => $local_file,
-            );
             if ( $local_file->is_newstuff ) {
                     # add this file to the list of files that should be in
                     # /newstuff
@@ -753,6 +753,7 @@ use constant {
                     || $local_file->is_newstuff)
                     && ! $cfg->defined(q(sync-all))){
                     $log->debug(q(Non-WAD file needs sync, missing --sync-all));
+                    $non_wads{$local_file->absolute_path}++;
                     next IDGAMES_LINE;
                 }
                 if ( $cfg->defined(q(dry-run)) ) {
@@ -760,6 +761,11 @@ use constant {
                     push(@synced_files, $archive_file);
                     next IDGAMES_LINE;
                 } else {
+                    # write the record of the file if sync was successful
+                    $reporter->write_record(
+                        archive_obj    => $archive_file,
+                        local_obj      => $local_file,
+                    );
                     my $sync_status = $local_file->sync( lwp => $lwp );
                     if ( $sync_status ) {
                         # add the file to the list of synced files
@@ -936,7 +942,8 @@ use constant {
         total_archive_files     => scalar(keys(%idgames_filelist)),
         total_archive_size      => $total_archive_size,
         newstuff_file_count     => scalar(keys(%newstuff_dir)),
-        deleted_file_count      => $deleted_file_count,
+        newstuff_deleted_count  => $deleted_file_count,
+        non_wads_file_count     => scalar(keys(%non_wads)),
     );
     exit 0;
 

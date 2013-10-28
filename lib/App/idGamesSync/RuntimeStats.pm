@@ -140,7 +140,9 @@ sub write_stats {
     $log->logdie(qq(missing 'newstuff_file_count' argument))
         unless ( exists $args{newstuff_file_count} );
     $log->logdie(qq(missing 'deleted_file_count' argument))
-        unless ( exists $args{deleted_file_count} );
+        unless ( exists $args{newstuff_deleted_count} );
+    $log->logdie(qq(missing 'non_wads_file_count' argument))
+        unless ( exists $args{non_wads_file_count} );
 
     my $total_synced_bytes = 0;
     my @total_synced_files = @{$args{total_synced_files}};
@@ -169,7 +171,9 @@ sub write_stats {
     $output .= qq(- Total files currently in /newstuff directory: );
     $output .= $args{newstuff_file_count} . qq(\n);
     $output .= qq(- Total old files deleted from /newstuff directory: );
-    $output .= $args{deleted_file_count} . qq(\n);
+    $output .= $args{newstuff_deleted_count} . qq(\n);
+    $output .= qq(- Total non-WAD files that could be sync'ed from idGames: );
+    $output .= $args{non_wad_file_count} . qq(\n);
 
     $output .= qq(- Total script execution time: )
         . sprintf('%0.2f', tv_interval ( $start_time, $stop_time ) )
