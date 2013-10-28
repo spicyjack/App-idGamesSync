@@ -554,6 +554,8 @@ use constant {
                     . q(is not a valid format));
         }
     }
+    # set the report format in the Reporter object after processing command
+    # line args
     $reporter->report_format($report_format);
     $log->debug(q(Report format set to: ) . $reporter->report_format);
 
@@ -643,9 +645,9 @@ use constant {
             . qq(;  checksum: $archive_digest\n);
         if ( $local_digest ne $archive_digest ) {
             #my $out_fh = IO::File->new(qq(> $lslar_file));
-            print qq(- ls-laR.gz Checksum mismatch...\n);
-            print qq(- Replacing file: $lslar_file\n);
-            print qq(- With file: $dl_lslar_file\n);
+            print qq(- Checksum mismatch, archive copy has changed...\n);
+            print qq(- Replacing local 'ls-laR.gz' file: $lslar_file\n);
+            print qq(- With downloaded 'ls-laR.gz' file: $dl_lslar_file\n);
             move($dl_lslar_file, $lslar_file);
         } else {
             print qq(- $lslar_file and archive copy match!\n);
