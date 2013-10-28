@@ -554,7 +554,7 @@ use constant {
                     . q(is not a valid format));
         }
     }
-    $reporter->report_format = $report_format;
+    $reporter->report_format($report_format);
     $log->debug(q(Report format set to: ) . $reporter->report_format);
 
     # skip syncing of dotfiles by default
