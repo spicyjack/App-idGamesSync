@@ -1,5 +1,58 @@
 Revision history for App-idGamesЅync
 
-0.01    Date/time
-        First version, released on an unsuspecting world.
+0.0.8   Next release date
+- project: close #77; move Config object into it's own file
+- idgames_sync.pl: Close #66; don't show non-WAD files needed syncing
+- idgames_sync.pl: Close #83: set report format attribute correctly
+
+0.0.7   Wed Oct 23 17:43:59 2013 -0700
+- idgames_sync.pl: set report type/format in Reporter object; fixes #63
+- idgames_sync.pl: never return undef values from split_mod_time; fixes #73
+- idgames_sync.pl: removed Reporter role, it was redundant; fixes #72
+- idgames_sync.pl: show regexes used to match metafiles; fixes #75
+- idgames_sync.pl: remove references to JenkBuilder; closes #74
+- project: split main script into individual files; closes #15
+
+0.0.6   Tue Sep 17 16:46:13 2013 -0700
+- idgames_sync.pl: align dates in all output formats; fixes #56
+- idgames_sync.pl: remove report --type all; fixes #70
+- idgames_sync.pl: skip reporting size mismatched metafiles; fixes #69
+- idgames_sync.pl: Delete non-archive files with --prune; fixes #5
+- idgames_sync.pl: start implementing %idgames_filelist for issue #5
+- idgames_sync.pl: clean up /newstuff using ls-laR.gz; fixes #41
+- idgames_sync.pl: include /newstuff in the wad_dir regex; fixeѕ #68
+- idgames_sync.pl: use download file as part of temp filename; fixes #49
+- іdgames_sync.pl: added --version option; closes #67
+- idgames_sync.pl: display script version in output; fixes #65
+
+0.0.5   Sat Aug 31 10:43:41 2013 -0700
+- idgames_sync.pl: first crack at --sync-all; fixes #25
+- idgames_sync.pl: added new attrib 'url_path'; fixes #62
+- idgames_sync.pl: Added --examples for MSWin32; fixes #58
+- idgames_sync.pl: make url_regex more robust; fixes #60
+- idgames_sync.pl: Clean out SYNOPSIS block; fixes #59
+- idgames_sync.pl: Use "C:" when calling stat() on mswin32; Fixes #19
+- idgames_sync.pl: indent output when format=more/full; fixes #54
+- idgames_sync.pl: Show "Missing file" when format=full; fixes #53
+- main: added --skip-ls-lar switch, fixes #45
+- main: make --size-local the default report type; fixes #33
+- fetch: use URI::Escape to escape URIs; fixes #51
+- fetch: delete tempfile when download fails; fixes #45
+- fetch: don't check for HTTP return code on errors; fixes #50
+- fetch: print filepath and hostname when fetching files; fixes #48
+- main: don't warn about download size for --dry-run; fixes #44
+
+0.0.4   Sun Jul 28 22:51:18 2013 -0700
+- Check for metadata/newstuff when syncing files, and use the master mirror
+  only when downloading files from those directories        
+- Rearragned the POD that's displayed when --help is called
+- main: check size of download vs. archive; fixes #40
+- sync: check for metadata/newstuff; fixes #30 #31
+- fetch: change 'filename' to 'filepath'; fixes #38
+- main: Create directories if they don't exist; fixes #37
+- stat_local: handle undef from getpwuid/getgrgid; fixes #36
+- main: handle when 'ls-laR.gz' doesn't exist; fixes #35
+- app: fixed call to $cfg->set to use two arg format; fixes #34
+- app: skip syncing /incoming unless --incoming set; fixes #2
+- app: fixed #29: all files tagged as "IS_UNKNOWN"
 
