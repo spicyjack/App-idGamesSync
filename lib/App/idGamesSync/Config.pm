@@ -34,7 +34,7 @@ has q(options) => (
 
 =over
 
-=item new() (aka BUILD)
+=item BUILD() (aka 'new')
 
 Creates the L<App::idGamesSync::Config> object, parses options from the
 command line via L<Getopt::Long>, and returns the object to the caller.

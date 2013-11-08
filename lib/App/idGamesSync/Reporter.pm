@@ -121,7 +121,7 @@ has show_dotfiles => (
 
 =over
 
-=item new() (aka BUILD)
+=item BUILD() (aka 'new')
 
 Creates the L<App::idGamesSync::Reporter> object, which is used to write the
 information about local/archived files and directories to C<STDOUT>.

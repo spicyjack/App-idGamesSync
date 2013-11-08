@@ -106,7 +106,7 @@ has q(tempdir) => (
 
 =over
 
-=item new() (aka BUILD)
+=item BUILD() (aka 'new')
 
 Creates the L<LWP::UserAgent> wrapper object.
 

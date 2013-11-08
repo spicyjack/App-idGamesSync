@@ -164,7 +164,7 @@ has notes => (
 
 =over
 
-=item new() (BUILD)
+=item BUILD() (aka 'new')
 
 Creates an object that has consumed the
 L<App::idGamesSync::Role::LocalFileDir> role.  This object would be used to
