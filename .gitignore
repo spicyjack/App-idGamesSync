@@ -4,3 +4,7 @@
 tags
 demos/.*\.jpg$
 demos/.*\.png$
+MYMETA.*
+Makefile
+blib/
+pm_to_blib
