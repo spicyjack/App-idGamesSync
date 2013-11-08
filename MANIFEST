@@ -4,6 +4,7 @@ Makefile.PL
 README.md
 bin/idgames_sync.pl
 t/00-load.t
+t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
 bin/idgames_sync.pl
