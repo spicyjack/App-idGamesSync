@@ -20,12 +20,6 @@ deathmatch and cooperative play in the explicit sense, and helped further the
 practice of allowing and encouraging fan-made modifications of commercial
 video games."
 
-The README is used to introduce the module and provide instructions on
-how to install the module, any machine dependencies it may have (for
-example C compilers and installed libraries) and any other information
-that should be provided before the module is installed.
-
-
 ## INSTALLATION ##
 
 To install this module, run the following commands:
@@ -34,6 +28,11 @@ To install this module, run the following commands:
 	make
 	make test
 	make install
+
+To use `cpanm` to install this module from a tarball, unpack the module source
+and run the `cpanm` command inside of it;
+
+    cpanm .
 
 ## SUPPORT AND DOCUMENTATION ##
 
