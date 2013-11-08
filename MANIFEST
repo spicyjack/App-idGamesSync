@@ -6,3 +6,16 @@ bin/idgames_sync.pl
 t/00-load.t
 t/pod-coverage.t
 t/pod.t
+bin/idgames_sync.pl
+lib/App/idGamesSync/Role/FileDirAttribs.pm
+lib/App/idGamesSync/Role/DirAttribs.pm
+lib/App/idGamesSync/Role/LocalFileDir.pm
+lib/App/idGamesSync/RuntimeStats.pm
+lib/App/idGamesSync/LWPWrapper.pm
+lib/App/idGamesSync/LocalDirectory.pm
+lib/App/idGamesSync/LocalFile.pm
+lib/App/idGamesSync/Config.pm
+lib/App/idGamesSync/ArchiveFile.pm
+lib/App/idGamesSync/Reporter.pm
+lib/App/idGamesSync/ArchiveDirectory.pm
+
