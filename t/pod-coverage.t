@@ -16,5 +16,8 @@ plan skip_all => "Pod::Coverage $min_pc required for testing POD coverage"
     if $@;
 
 # 08Nov2013; Pod::Coverage is erroring out when it finds the constant in
-# LocalFileDir.pm, it thinks it's a bunch of undocumented methods
-#all_pod_coverage_ok();
+# LocalFileDir.pm, it thinks it's a bunch of undocumented methods;
+# Add the constants as a 'trustme' block.  See
+# https://metacpan.org/pod/Pod::Coverage for other keywords that can be used
+my $constants = { trustme => [qr/^IS_*|DIFF_SIZE/] };
+all_pod_coverage_ok($constants);
