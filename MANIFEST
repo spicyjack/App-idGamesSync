@@ -2,12 +2,11 @@ Changes
 MANIFEST
 Makefile.PL
 README.md
-bin/idgames_sync.pl
+bin/idgames_sync
 t/00-load.t
 t/boilerplate.t
 t/pod-coverage.t
 t/pod.t
-bin/idgames_sync.pl
 lib/App/idGamesSync/Role/FileDirAttribs.pm
 lib/App/idGamesSync/Role/DirAttribs.pm
 lib/App/idGamesSync/Role/LocalFileDir.pm

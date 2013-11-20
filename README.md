@@ -39,21 +39,21 @@ and run the `cpanm` command inside of it;
 After installing, you can find documentation for this application with the
 perldoc command.
 
-    perldoc idgames_sync.pl
+    perldoc idgames_sync
 
 You can get basic help with the script itself by calling:
 
-    perl idgames_sync.pl --help
+    perl idgames_sync --help
 
 The script generates different styles of reports on what files will be
 synchronized.  More information on report types, output formats of reports,
 and specifying mirror servers to synchronize to can be shown by calling:
 
-    perl idgames_sync.pl --morehelp
+    perl idgames_sync --morehelp
 
 Examples of script usage can be seen by calling:
 
-    perl idgames_sync.pl --examples
+    perl idgames_sync --examples
 
 You can also look for information at:
 

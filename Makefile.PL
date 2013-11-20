@@ -7,12 +7,11 @@ WriteMakefile(
     AUTHOR              => 'Brian Manning <brian at xaoc dot org>',
     VERSION_FROM        => 'bin/idgames_sync',
     ABSTRACT            => 'Synchronize a copy of the C<idgames> archive.',
-    #ABSTRACT_FROM       => 'bin/idgames_sync.pl',
     ($ExtUtils::MakeMaker::VERSION >= 6.3002
       ? ('LICENSE'=> 'perl')
       : ()),
     PL_FILES            => {},
-    EXE_FILES           => [q(bin/idgames_sync.pl)],
+    EXE_FILES           => [q(bin/idgames_sync)],
     BUILD_REQUIRES => {
         'Test::More'            => 0,
     },
