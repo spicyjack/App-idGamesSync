@@ -135,7 +135,7 @@ specified with C<--url>.
 
 =cut
 
-has metafiles     => (
+has metafiles => (
     is      => q(ro),
     isa     => q(RegexpRef),
     default => sub {
@@ -149,17 +149,17 @@ inside of the C<idGames> Mirror.
 
 =cut
 
-has wad_dirs      => (
+has not_wad_dirs => (
     is      => q(ro),
     isa     => q(RegexpRef),
     default => sub {
         # regex that covers all "non-WAD" directories
-        #my $levels = q(/docs|/graphics|/history|/idstuff|/lmps|/misc|/music);
-        #$levels .= q(|/prefabs|/roguestuff|/skins|/sounds|/source);
-        #$levels .= q(|/themes|/utils);
+        my $levels = q(^docs|^graphics|^history|^idstuff|^levels/reviews);
+        $levels .= q(|^lmps|^misc|^music|^prefabs|^roguestuff|^skins);
+        $levels .= q(|^sounds|^source|^themes/terrywads|^utils);
         # regex that covers all levels directories
-        my $levels = q(^combos|^deathmatch);
-        $levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
+        #my $levels = q(^combos|^deathmatch);
+        #$levels .= q(|^levels/[doom|doom2|hacx|heretic|hexen|strife]);
         # going to implement this as an attribute/boolean flag; this will let
         # it be reused later on when capturing the contents of the /newstuff
         # directory, in order to get a list of files to delete
@@ -257,18 +257,18 @@ files inside of it.
 
 sub is_wad_dir {
     my $self = shift;
-    my $wad_dirs_regex = $self->wad_dirs;
+    my $not_wad_dirs_regex = $self->not_wad_dirs;
 
     #my $log = Log::Log4perl->get_logger();
     #$log->debug(qq(Checking: ) . $self->short_path);
     #$log->debug(qq(With regex: $wad_dirs_regex));
 
-    if ( $self->short_path =~ /$wad_dirs_regex/ ) {
-        #$log->debug($self->short_path . qq( is a WAD dir));
-        return 1;
-    } else {
+    if ( $self->short_path =~ /$not_wad_dirs_regex/ ) {
         #$log->debug($self->short_path . qq( is *NOT* a WAD dir));
         return 0;
+    } else {
+        #$log->debug($self->short_path . qq( is a WAD dir));
+        return 1;
     }
 }
 
