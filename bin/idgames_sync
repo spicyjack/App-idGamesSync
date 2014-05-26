@@ -110,6 +110,7 @@ our @options = (
  -u|--url           Use a specific URL instead of a random mirror
  --create-mirror    Authorize script to create a new copy of the mirror
  --sync-all         Synchronize everything, not just WAD directories
+ --prune-all        Prune files from the archive, not just in /newstuff
  --skip-ls-lar      Don't fetch 'ls-laR.gz' (after using '--update-ls-lar')
  --update-ls-lar    Update the local 'ls-laR.gz' file, then exit
 
