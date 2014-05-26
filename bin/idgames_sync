@@ -2,14 +2,14 @@
 
 package main;
 our $copyright =
-    q|Copyright (c) 2011,2013 by Brian Manning <brian at xaoc dot org>|;
+    q|Copyright (c) 2011,2013-2014 by Brian Manning <brian at xaoc dot org>|;
 
 # For support with this file, please file an issue on the GitHub issue
 # tracker: https://github.com/spicyjack/App-idGamesSync/issues
 
 =head1 NAME
 
-idgames_sync.pl - Synchronize a copy of the C<idGames> archive.
+idgames_sync - Synchronize a copy of the C</idgames> archive.
 
 =head1 VERSION
 
@@ -54,7 +54,7 @@ our $our_name = basename $0;
 
 =head1 SYNOPSIS
 
-Create or update a copy of the C<idGames> archive on the local host.
+Create or update a copy of the C</idgames> archive on the local host.
 
 =cut
 
@@ -96,7 +96,7 @@ our @options = (
 
 =head1 OPTIONS
 
- perl idgames_sync.pl [options]
+ idgames_sync [options]
 
  Script options:
  -h|--help          Displays script options and usage
@@ -584,8 +584,8 @@ use constant {
         $log->fatal(qq(Can't read/find the 'ls-laR.gz' file!));
         $log->fatal(qq|(Checked: $lslar_file)|);
         $log->fatal(qq(If you are creating a new mirror, please use the));
-        $log->fatal(qq('--create-mirror' switch; otherwise, check that));
-        $log->fatal(qq(the '--path' switch is pointing to the directory));
+        $log->fatal(qq('--create-mirror' switch; otherwise, check that the));
+        $log->fatal(qq('--path' switch is pointing to the local directory));
         $log->fatal(qq(where the local copy of 'idgames' is located.));
         $log->logdie(qq(Exiting script...));
     }
