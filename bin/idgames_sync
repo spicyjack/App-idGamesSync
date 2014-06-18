@@ -734,14 +734,21 @@ use constant {
             # populate file attribs if it does exist
             $local_file->stat_local();
 
-            # add the file to the filelist
+            # add the file to the filelist; note, there's a debug statement
+            # for this below
             $idgames_filelist{$local_file->absolute_path}++;
+            $log->debug(q(Added file ) . $local_file->absolute_path
+                . q(to idgames_filelist));
 
+            # check to see if the file is in the /newstuff directory, and add
+            # it to the %newstuff_dir hash if it is; this gets used when
+            # generating stats at the end of the script
             if ( $local_file->is_newstuff ) {
-                    # add this file to the list of files that should be in
-                    # /newstuff
-                    $newstuff_dir{$local_file->absolute_path}++;
-                    $log->debug(q(Added file to /newstuff list));
+                # add this file to the list of files that should be in
+                # /newstuff
+                $newstuff_dir{$local_file->absolute_path}++;
+                $log->debug(q(Added file ) . $local_file->absolute_path
+                    . q(to /newstuff list));
             }
             if ( $local_file->needs_sync ) {
                 # skip syncing dotfiles unless --dotfiles was used
@@ -906,7 +913,12 @@ use constant {
             . q( files on the 'idgames' Archive mirrors));
         $log->debug(q(There are currently ) . scalar(@local_idgames_files)
             . q( files in the local copy of 'idGames' archive));
+        #$log->debug(q(Dumping idgames_filelist hash));
+        #$log->debug(Dumper {%idgames_filelist});
         @local_file_check = @local_idgames_files;
+        #$log->debug(q(Dumping local_file_check));
+        #$log->debug(Dumper [@local_file_check]);
+
     } else {
         $log->debug(q(Checking /newstuff for files to delete));
         $log->debug(q(/newstuff currently should have )
@@ -915,19 +927,23 @@ use constant {
         @local_file_check = grep(/$newstuff_path/, @local_idgames_files);
     }
 
-    foreach my $local_file ( sort(@local_file_check) ) {
-        my $check_file;
+    CHECK_LOCAL_FILE: foreach my $local_file ( sort(@local_file_check) ) {
+        next CHECK_LOCAL_FILE if ( $local_file =~ /listing$/ );
+        my $archive_check_file;
         my $delete_location;
-        # see if the $check_file exists in the archive (and in /newstuff)
+        # see if the $archive_check_file exists in the local copy of the
+        # archive (and in /newstuff)
         if ( $cfg->defined(q(prune-all)) ) {
-            $check_file = $idgames_filelist{$local_file};
+            $archive_check_file = $idgames_filelist{$local_file};
             $delete_location = "non-archive";
         } else {
-            $check_file = $idgames_filelist{$local_file};
+            $archive_check_file = $idgames_filelist{$local_file};
             $delete_location = "/newstuff";
         }
-        # if the file does not exist in the archive/in /newstuff
-        if ( ! defined $check_file ) {
+        # if the file does not exist in the local copy of the archive or in
+        # /newstuff
+        if ( ! defined $archive_check_file ) {
+
             if ( $cfg->defined(q(dry-run)) ) {
                 print qq(* Would delete $delete_location file: $local_file\n);
             } else {
