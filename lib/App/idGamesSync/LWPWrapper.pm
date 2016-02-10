@@ -284,12 +284,12 @@ sub fetch {
             );
         } else {
             # we couldn't grab it from the master mirror either
-            return undef;
+            return;
         }
     } elsif ( $response->is_redirect() ) {
         $log->warn(qq(Server returned 3XX redirect code;));
         $log->warn(q(Response status: ) . $response->status_line );
-        return undef;
+        return;
     } else {
         #my $content = $response->content;
         my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
