@@ -3,7 +3,7 @@ use warnings;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-    NAME                => 'App::idGamesЅync',
+    NAME                => 'App::idGamesSync',
     AUTHOR              => 'Brian Manning <brian at xaoc dot org>',
     VERSION_FROM        => 'bin/idgames_sync',
     ABSTRACT            => 'Synchronize a copy of the C<idgames> archive.',
