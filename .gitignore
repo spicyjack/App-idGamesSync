@@ -8,3 +8,5 @@ MYMETA.*
 Makefile
 blib/
 pm_to_blib
+# tarball created by 'make dist'
+App-idGamesSync-*.tar.gz
