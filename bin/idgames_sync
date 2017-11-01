@@ -1,8 +1,12 @@
 #!/usr/bin/env perl
 
 package main;
+use strict;
+use warnings;
+
 our $copyright =
-    q|Copyright (c) 2011,2013-2014 by Brian Manning <brian at xaoc dot org>|;
+    q|Copyright (c) 2011, 2013-2014, 2017 |
+    . q|by Brian Manning <brian at xaoc dot org>|;
 
 # For support with this file, please file an issue on the GitHub issue
 # tracker: https://github.com/spicyjack/App-idGamesSync/issues
@@ -28,6 +32,7 @@ use File::Find::Rule;
 use File::stat;
 use Getopt::Long;
 use IO::File;
+use IO::Interactive;
 use IO::Uncompress::Gunzip qw($GunzipError);
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo; # sets strict and warnings
@@ -417,7 +422,7 @@ use constant {
     # below)
     if ( ! $cfg->defined(q(colorize)) ) {
         # colorize if STDOUT is connected to a terminal
-        if ( -t STDOUT ) {
+        if ( is_interactive() ) {
             $cfg->set(colorize => 1);
         } else {
             $cfg->set(colorize => 0);
