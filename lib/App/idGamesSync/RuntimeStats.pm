@@ -24,7 +24,7 @@ Among other things, this object will help keep track of:
 
 =cut
 
-use Mouse;
+use Moo;
 use Number::Format; # pretty output of bytes
 use Time::HiRes qw( gettimeofday tv_interval );
 

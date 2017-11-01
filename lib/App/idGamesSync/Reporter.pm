@@ -13,7 +13,7 @@ missing file.  This object consumes the L<Role::Reports> role.
 
 =cut
 
-use Mouse;
+use Moo;
 use constant {
     IS_DIR      => q(D),
     IS_FILE     => q(F),

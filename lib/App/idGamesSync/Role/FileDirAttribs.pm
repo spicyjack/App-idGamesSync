@@ -10,7 +10,7 @@ Things like filename, full path, owner/group, permissions, size, etc.
 
 =cut
 
-use Mouse::Role;
+use Moo::Role;
 
 =head2 Attributes
 

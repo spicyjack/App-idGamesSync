@@ -30,7 +30,7 @@ use Getopt::Long;
 use IO::File;
 use IO::Uncompress::Gunzip qw($GunzipError);
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
-use Mouse; # sets strict and warnings
+use Moo; # sets strict and warnings
 use Pod::Usage; # prints POD docs when --help is called
 
 use Data::Dumper;

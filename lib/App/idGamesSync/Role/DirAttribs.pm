@@ -10,7 +10,7 @@ Currently, this is only the total blocks used by this directory.
 
 =cut
 
-use Mouse::Role;
+use Moo::Role;
 
 =head2 Attributes
 

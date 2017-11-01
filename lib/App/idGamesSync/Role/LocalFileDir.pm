@@ -10,7 +10,7 @@ local filesystem.
 
 =cut
 
-use Mouse::Role;
+use Moo::Role;
 use Date::Format;
 use File::Copy;
 use File::stat; # OO wrapper around stat()

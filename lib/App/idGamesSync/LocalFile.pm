@@ -12,7 +12,7 @@ list of inherited attributes and methods.
 
 =cut
 
-use Mouse;
+use Moo;
 
 with qw(
     App::idGamesSync::Role::FileDirAttribs

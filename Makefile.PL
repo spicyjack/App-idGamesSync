@@ -26,7 +26,7 @@ WriteMakefile(
         'IO::File'              => 0,
         'Log::Log4perl'         => 0,
         'LWP::UserAgent'        => 0,
-        'Mouse'                 => 0,
+        'Moo'                   => 0,
         'Number::Format'        => 0,
         'Pod::Usage'            => 0,
         'Test::More'            => 0,

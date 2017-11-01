@@ -13,7 +13,7 @@ then handling response codes from servers, if any.
 use File::Temp;
 use LWP::UserAgent;
 use URI::Escape;
-use Mouse;
+use Moo;
 use Number::Format;
 
 my @usable_mirrors;
