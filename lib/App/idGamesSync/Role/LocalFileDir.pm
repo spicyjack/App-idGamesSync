@@ -392,7 +392,7 @@ sub exists {
     if ( defined $stat ) {
         return $stat;
     } else {
-        return undef;
+        return;
     }
 }
 
