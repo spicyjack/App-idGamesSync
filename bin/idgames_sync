@@ -21,7 +21,7 @@ Version v0.0.7
 
 =cut
 
-use version; our $VERSION = qv('0.0.7');
+use version; our $VERSION = qv('0.0.8');
 
 ### external packages
 use Date::Format; # strftime
