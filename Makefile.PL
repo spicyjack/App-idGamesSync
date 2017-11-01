@@ -20,7 +20,7 @@ WriteMakefile(
         'Digest::MD5'           => 0,
         'File::Copy'            => 0,
         'File::stat'            => 0,
-        'File::Stat::Ls'        => 0,
+        'Stat::lsMode'          => 0,
         'File::Temp'            => 0,
         'Getopt::Long'          => 0,
         'IO::File'              => 0,

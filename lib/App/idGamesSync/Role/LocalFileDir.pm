@@ -14,7 +14,7 @@ use Moo::Role;
 use Date::Format;
 use File::Copy;
 use File::stat; # OO wrapper around stat()
-use File::Stat::Ls; # conversion tools for the file/dir modes
+use Stat::lsMode; # conversion tools for the file/dir modes
 
 use Data::Dumper;
 $Data::Dumper::Indent = 1;
@@ -258,8 +258,8 @@ sub stat_local {
         $self->append_notes(qq(Missing on local system));
         $self->needs_sync(1);
     } else {
-        my $lsperms = File::Stat::Ls->new();
-        $self->perms($lsperms->format_mode($stat->mode) );
+        # translate output from 'stat()' into something human readable
+        $self->perms(format_mode($stat->mode) );
         $self->hardlinks($stat->nlink);
         my ($file_owner, $file_group);
         if ( $self->is_mswin32 ) {
