@@ -14,6 +14,7 @@ use Moo::Role;
 use Date::Format;
 use File::Copy;
 use File::stat; # OO wrapper around stat()
+use Scalar::Util qw(blessed);
 use Stat::lsMode; # conversion tools for the file/dir modes
 
 use Data::Dumper;
@@ -41,7 +42,7 @@ The path to the local C</idGames> archive passed in by the user.
 
 has opts_path => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =item archive_obj
@@ -52,7 +53,8 @@ The Archive object that this object is based off of.
 
 has archive_obj => (
     is      => q(rw),
-    isa     => q(Object),
+    # checks to see if the object being set is "blessed" in Perl
+    isa     => sub { blessed($_) },
 );
 
 =item absolute_path
@@ -63,7 +65,7 @@ The absolute path to this file or directory, from the drive/filesystem root.
 
 has absolute_path => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 
@@ -78,7 +80,7 @@ for Windows).
 
 has short_path => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =item short_type
@@ -90,7 +92,7 @@ missing from the filesystem, or 'unknown'.
 
 has short_type => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(),
 );
 
@@ -104,7 +106,7 @@ does not match the size of the file in the archive.
 
 has short_status => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(),
 );
 
@@ -116,7 +118,7 @@ A short summary of the file's status, used in more verbose reports.
 
 has long_status => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(),
 );
 
@@ -131,7 +133,7 @@ currently running on.
 
 has url_path => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =item needs_sync
@@ -142,7 +144,7 @@ A flag that is set when this file or directory needs to be synchronized.
 
 has needs_sync => (
     is      => q(rw),
-    isa     => q(Bool),
+    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
     default => q(0),
 );
 
@@ -156,7 +158,7 @@ A string that contains extra information about the file/directory.
 
 has notes => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(),
 );
 

@@ -11,6 +11,14 @@ Things like filename, full path, owner/group, permissions, size, etc.
 =cut
 
 use Moo::Role;
+use Type::Tiny;
+
+my $INTEGER = "Type::Tiny"->new(
+   name       => q(Integer),
+   constraint => sub { $_ =~ /\d+/ },
+   message    => sub { qq($_ ain't an Integer) },
+);
+
 
 =head2 Attributes
 
@@ -24,7 +32,7 @@ Permissions of the file/directory.
 
 has perms       => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(----------),
 );
 
@@ -36,7 +44,7 @@ Number of hard links back to this file/directory.
 
 has hardlinks   => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
     default => 0,
 );
 
@@ -48,7 +56,7 @@ Name of the owner of the file/directory.
 
 has owner       => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(!!!),
 );
 
@@ -60,7 +68,7 @@ Name of the group of the file/directory.
 
 has group       => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(!!!),
 );
 
@@ -73,7 +81,7 @@ Size of the file/directory.
 
 has size        => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
     default => 0,
 );
 
@@ -86,7 +94,7 @@ Modification date of the file/directory.
 
 has mod_time    => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(!!!),
 );
 
@@ -98,7 +106,7 @@ Name of the file/directory.
 
 has name        => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =item parent_path
@@ -109,7 +117,7 @@ The parent_path directory of this file/directory.
 
 has parent_path      => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =item dotfiles
@@ -122,7 +130,6 @@ to store text messages that are displayed in FTP/HTTP directory listings.
 
 has dotfiles      => (
     is      => q(ro),
-    isa     => q(RegexpRef),
     default => sub {qr/\.message|\.DS_Store|\.mirror_log|\.listing/;}
 );
 
@@ -137,7 +144,6 @@ specified with C<--url>.
 
 has metafiles => (
     is      => q(ro),
-    isa     => q(RegexpRef),
     default => sub {
         qr/ls-laR\.gz|LAST\.\d+\w+|fullsort\.gz|REJECTS|README\.*/;},
 );
@@ -151,7 +157,6 @@ inside of the C<idGames> Mirror.
 
 has not_wad_dirs => (
     is      => q(ro),
-    isa     => q(RegexpRef),
     default => sub {
         # regex that covers all "non-WAD" directories
         my $levels = q(^docs|^graphics|^history|^idstuff|^levels/reviews);
