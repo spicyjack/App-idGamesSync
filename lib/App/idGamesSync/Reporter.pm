@@ -215,7 +215,7 @@ sub write_record {
         $log->debug(q(Found dotfile, but --dotfiles not set, not displaying));
         $write_report_flag = 0;
     }
-    return undef unless ( $write_report_flag );
+    return unless ( $write_report_flag );
 
     if ( $self->report_format eq q(full) ) {
         $self->format_full(
