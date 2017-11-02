@@ -12,9 +12,11 @@ then handling response codes from servers, if any.
 
 use File::Temp;
 use LWP::UserAgent;
-use URI::Escape;
 use Moo;
 use Number::Format;
+use Scalar::Util;
+use URI::Escape;
+
 
 my @usable_mirrors;
 my @idgames_mirrors = qw(
@@ -37,7 +39,7 @@ pull files from the mirror server.
 
 has q(base_url) => (
     is      => q(rw),
-    isa     => q(Any),
+    isa     => sub { defined($_) },
 );
 
 =item user_agent
@@ -48,7 +50,7 @@ The L<LWP::UserAgent> object that's created in the L<new()> method.
 
 has q(user_agent) => (
     is      => q(rw),
-    isa     => q(Object),
+    isa     => sub { blessed($_) },
 );
 
 =item exclude_urls
@@ -60,7 +62,7 @@ option to skip mirror servers that are not functioning.
 
 has q(exclude_urls) => (
     is      => q(rw),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
 );
 
 =item master_mirror
@@ -71,7 +73,7 @@ The main mirror site, currently L<ftp://ftp.fu-berlin.de/pc/games/idgames>.
 
 has q(master_mirror) => (
     is      => q(ro),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(ftp://ftp.fu-berlin.de/pc/games/idgames),
 );
 
@@ -83,7 +85,7 @@ Regex to get different bits of the URL back, to be used in script/debug output.
 
 has q(url_regex) => (
     is      => q(ro),
-    isa     => q(RegexpRef),
+    isa     => sub { ref($_) =~ /Regexp/ },
     # $1 = scheme, $2 = host, $3 is path
     default => sub {qr!^(ftp|http|https){1}://([\w.-]+)/??(.*)*$!;}
 );
@@ -99,7 +101,7 @@ will cause L<File::Temp> to use it's built-in default.
 
 has q(tempdir) => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
 );
 
 =head2 Methods
