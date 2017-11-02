@@ -14,6 +14,13 @@ list of inherited attributes and methods.
 =cut
 
 use Moo;
+use Type::Tiny;
+
+my $INTEGER = "Type::Tiny"->new(
+   name       => q(Integer),
+   constraint => sub { $_ =~ /\d+/ },
+   message    => sub { qq($_ ain't an Integer) },
+);
 
 with qw(
     App::idGamesSync::Role::DirAttribs
@@ -36,7 +43,7 @@ disk or in the archive file.
 
 has total_blocks    => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
 );
 
 1;
