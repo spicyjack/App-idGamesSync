@@ -27,6 +27,13 @@ Among other things, this object will help keep track of:
 use Moo;
 use Number::Format; # pretty output of bytes
 use Time::HiRes qw( gettimeofday tv_interval );
+use Type::Tiny;
+
+my $INTEGER = "Type::Tiny"->new(
+   name       => q(Integer),
+   constraint => sub { $_ =~ /\d+/ },
+   message    => sub { qq($_ ain't an Integer) },
+);
 
 my ($start_time, $stop_time);
 
@@ -45,7 +52,7 @@ to say "Total [files|bytes] to be synced..." instead of
 
 has q(dry_run) => (
     is      => q(rw),
-    isa     => q(Bool),
+    isa     => sub { $_ =~ /0|1|y|n|t|f/i }
 );
 
 =item total_synced_bytes
@@ -56,7 +63,7 @@ The amount of data in bytes synced from the mirror server.
 
 has q(total_synced_bytes) => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
 );
 
 =item total_synced_files
@@ -67,7 +74,7 @@ The number of files pulled from the mirrors.
 
 has q(total_synced_files) => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER
 );
 
 =item total_archive_files
@@ -78,7 +85,7 @@ The number of files on a mirror.
 
 has q(total_archive_files) => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
 );
 
 =item total_archive_size
@@ -89,7 +96,7 @@ The amount of data stored on each mirror server.
 
 has q(total_archive_size) => (
     is      => q(rw),
-    isa     => q(Int),
+    isa     => $INTEGER,
 );
 
 =back
