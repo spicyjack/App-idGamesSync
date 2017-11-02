@@ -14,6 +14,7 @@ WriteMakefile(
     EXE_FILES           => [q(bin/idgames_sync)],
     BUILD_REQUIRES => {
         'Test::More'            => 0,
+        'Test::Pod::Coverage'   => 1.08,
     },
     PREREQ_PM => {
         'Date::Format'          => 0,
