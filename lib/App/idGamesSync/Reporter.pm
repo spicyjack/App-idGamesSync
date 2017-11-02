@@ -35,7 +35,7 @@ print.  Defaults to the contents of C<default_report_types> attribute.
 
 has report_types => (
     is      => q(rw),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
     default => sub{ [qw(size local)] },
 );
 
@@ -47,7 +47,7 @@ The report format to use when writing reports. Defaults to the C<more> format.
 
 has report_format => (
     is      => q(rw),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(more),
 );
 
@@ -60,7 +60,7 @@ C<size:local>.
 
 has default_report_types => (
     is      => q(ro),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
     default => sub{ [qw(size local)] },
 );
 
@@ -73,7 +73,7 @@ not on this list will cause the script to exit with an error.
 
 has valid_report_types => (
     is      => q(ro),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
     default => sub{ [qw(headers local archive size same)] },
 );
 
@@ -85,7 +85,7 @@ The default report format, currently C<more>.
 
 has default_report_format => (
     is      => q(ro),
-    isa     => q(Str),
+    isa     => sub { defined($_) },
     default => q(more),
 );
 
@@ -98,7 +98,7 @@ not on this list will cause the script to exit with an error.
 
 has q(valid_report_formats) => (
     is      => q(rw),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
     default => sub{ [qw(full more simple)] },
 );
 
@@ -111,7 +111,7 @@ C<1> means show dotfiles.  Default is C<0>, don't show dotfiles.
 
 has show_dotfiles => (
     is      => q(ro),
-    isa     => q(Bool),
+    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
     default => 0,
 );
 
