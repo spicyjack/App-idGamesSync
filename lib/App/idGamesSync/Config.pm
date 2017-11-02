@@ -25,7 +25,7 @@ An C<ArrayRef> to an array containing script options, in L<Getopt::Long> format.
 
 has q(options) => (
     is      => q(rw),
-    isa     => q(ArrayRef[Str]),
+    isa     => sub { ref($_) =~ /ARRAY/ },
 );
 
 =back
