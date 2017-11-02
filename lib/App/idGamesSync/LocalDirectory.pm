@@ -41,9 +41,4 @@ disk or in the archive file.
 
 =cut
 
-has total_blocks    => (
-    is      => q(rw),
-    isa     => $INTEGER,
-);
-
 1;
