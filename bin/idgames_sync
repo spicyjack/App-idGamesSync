@@ -3,6 +3,7 @@
 package main;
 use strict;
 use warnings;
+use 5.010;
 
 our $copyright =
     q|Copyright (c) 2011, 2013-2014, 2017 |
@@ -32,7 +33,7 @@ use File::Find::Rule;
 use File::stat;
 use Getopt::Long;
 use IO::File;
-use IO::Interactive;
+use IO::Interactive qw(is_interactive);
 use IO::Uncompress::Gunzip qw($GunzipError);
 use Log::Log4perl qw(get_logger :no_extra_logdie_message);
 use Moo; # sets strict and warnings
@@ -408,6 +409,16 @@ use constant {
     # flag set whenever we're parsing files in/beneath the /incoming directory
     my $incoming_dir_flag = 0;
 
+    # skip syncing of dotfiles by default
+    if ( ! $cfg->defined(q(dotfiles)) ) {
+        $cfg->set(dotfiles => 0);
+    }
+
+    # don't do dry-run by default
+    if ( ! $cfg->defined(q(dry-run)) ) {
+        $cfg->set(q(dry-run) => 0);
+    }
+
     # default log level
     my $log4perl_conf = qq(log4perl.rootLogger = WARN, Screen\n);
     if ( $cfg->defined(q(verbose)) && $cfg->defined(q(debug)) ) {
@@ -486,11 +497,15 @@ use constant {
         }
         $log->debug(q(Using ) . $cfg->get(q(tempdir)) . q( for tempdir));
     }
-    my $lwp = App::idGamesSync::LWPWrapper->new(
-        base_url        => $cfg->get(q(url)),
+
+    my $lwp_args_r = {
         exclude_urls    => \@exclude_urls,
         tempdir         => $cfg->get(q(tempdir)),
-    );
+    };
+    if ( $cfg->defined(q(url)) ) {
+        $lwp_args_r->{base_url} = $cfg->get(q(url));
+    }
+    my $lwp = App::idGamesSync::LWPWrapper->new($lwp_args_r);
 
     if ( $cfg->defined(q(show-mirrors)) ) {
         print qq(Current mirror URLs:\n);
@@ -524,7 +539,8 @@ use constant {
 
     # create the App::idGamesSync::Reporter object
     my $reporter = App::idGamesSync::Reporter->new(
-        show_dotfiles => $cfg->get(q(dotfiles)) );
+        dotfiles => $cfg->get(q(dotfiles))
+    );
 
     ### REPORT TYPES
     # the default report type is now size-local
@@ -565,13 +581,8 @@ use constant {
     $reporter->report_format($report_format);
     $log->debug(q(Report format set to: ) . $reporter->report_format);
 
-    # skip syncing of dotfiles by default
-    if ( ! $cfg->defined(q(dotfiles)) ) {
-        $cfg->set(dotfiles => 0);
-    }
-
     my $stats = App::idGamesSync::RuntimeStats->new(
-        dry_run       => $cfg->defined(q(dry-run)),
+        dry_run       => $cfg->get(q(dry-run)),
         report_format => $report_format
     );
     $stats->start_timer();
@@ -596,7 +607,7 @@ use constant {
     }
 
     ### UPDATE ls-laR.gz ###
-    if ( ! $cfg->defined(q(dry-run)) && ! $cfg->defined(q(skip-ls-lar)) ) {
+    if ( ! $cfg->get(q(dry-run)) && ! $cfg->defined(q(skip-ls-lar)) ) {
         $log->debug(qq(Fetching 'ls-laR.gz' file listing));
         # if a custom URL was specified, use that here instead
         my $lslar_url = $lwp->master_mirror;
@@ -779,7 +790,7 @@ use constant {
                     archive_obj    => $archive_file,
                     local_obj      => $local_file,
                 );
-                if ( $cfg->defined(q(dry-run)) ) {
+                if ( $cfg->get(q(dry-run)) ) {
                     $log->debug(q(Needs sync, dry-run set; parsing next line));
                     push(@synced_files, $archive_file);
                     next IDGAMES_LINE;
@@ -837,7 +848,7 @@ use constant {
                 local_obj      => $local_dir,
             );
             if ( $local_dir->needs_sync ) {
-                if ( ! $cfg->defined(q(dry-run)) ) {
+                if ( ! $cfg->get(q(dry-run)) ) {
                     $local_dir->sync( lwp => $lwp );
                 }
             } else {
@@ -949,7 +960,7 @@ use constant {
         # /newstuff
         if ( ! defined $archive_check_file ) {
 
-            if ( $cfg->defined(q(dry-run)) ) {
+            if ( $cfg->get(q(dry-run)) ) {
                 print qq(* Would delete $delete_location file: $local_file\n);
             } else {
                 print qq(* Deleting $delete_location file: $local_file\n);
