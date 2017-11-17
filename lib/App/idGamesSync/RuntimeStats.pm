@@ -52,7 +52,7 @@ to say "Total [files|bytes] to be synced..." instead of
 
 has q(dry_run) => (
     is      => q(rw),
-    isa     => sub { $_ =~ /0|1|y|n|t|f/i }
+    isa     => sub { defined $_ && $_ =~ /0|1|y|n|t|f/i }
 );
 
 =item total_synced_bytes
