@@ -144,7 +144,7 @@ A flag that is set when this file or directory needs to be synchronized.
 
 has needs_sync => (
     is      => q(rw),
-    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
+    isa     => sub { defined $_ && $_ =~ /0|1|y|n|t|f/i },
     default => q(0),
 );
 
@@ -422,7 +422,7 @@ Boolean flag that is set when running under Windows platforms.
 
 has is_mswin32 => (
     is      => q(rw),
-    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
+    isa     => sub { defined $_ && $_ =~ /0|1|y|n|t|f/i },
 );
 
 =item is_newstuff()
@@ -436,7 +436,7 @@ directory.
 
 has is_newstuff => (
     is      => q(rw),
-    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
+    isa     => sub { defined $_ && $_ =~ /0|1|y|n|t|f/i },
     default => q(0),
 );
 
