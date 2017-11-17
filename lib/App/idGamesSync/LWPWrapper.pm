@@ -14,7 +14,7 @@ use File::Temp;
 use LWP::UserAgent;
 use Moo;
 use Number::Format;
-use Scalar::Util;
+use Scalar::Util qw(blessed);
 use URI::Escape;
 
 
