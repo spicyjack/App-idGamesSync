@@ -111,7 +111,7 @@ C<1> means show dotfiles.  Default is C<0>, don't show dotfiles.
 
 has show_dotfiles => (
     is      => q(ro),
-    isa     => sub { $_ =~ /0|1|y|n|t|f/i },
+    isa     => sub { defined $_ && $_ =~ /0|1|y|n|t|f/i },
     default => 0,
 );
 
