@@ -22,7 +22,7 @@ my @usable_mirrors;
 my @idgames_mirrors = qw(
     ftp://ftp.fu-berlin.de/pc/games/idgames
     ftp://ftp.ntua.gr/pub/vendors/idgames
-    ftp://ftp.mancubus.net/pub/idgames/
+    http://phobos.xaoc.org/
     http://youfailit.net/pub/idgames
 );
 
