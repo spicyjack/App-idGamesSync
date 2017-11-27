@@ -20,6 +20,7 @@ WriteMakefile(
         'Date::Format'          => 0,
         'Digest::MD5'           => 0,
         'File::Copy'            => 0,
+        'File::Find::Rule'      => 0,
         'File::stat'            => 0,
         'File::Temp'            => 0,
         'Getopt::Long'          => 0,
