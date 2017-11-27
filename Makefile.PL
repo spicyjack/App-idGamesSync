@@ -33,6 +33,7 @@ WriteMakefile(
         'Stat::lsMode'          => 0,
         'Test::More'            => 0,
         'Time::HiRes'           => 0,
+        'Type::Tiny'            => 0,
         'constant'              => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
